@@ -78,26 +78,39 @@ function isTooShort(durationIso?: string): boolean {
 }
 
 
-// Fetch videos from a channel's uploads playlist
-// UPDATED: Fetches more items (20) and filters out Shorts (duration <= 60s)
-export async function getChannelVideos(channelId: string, maxResults = 10): Promise<Video[]> {
+// Fetch videos from a channel's uploads playlist with pagination support
+export interface ChannelVideosResponse {
+    videos: Video[];
+    nextPageToken?: string;
+    hasMore: boolean;
+}
+
+export async function getChannelVideos(
+    channelId: string, 
+    maxResults = 20, 
+    pageToken?: string
+): Promise<ChannelVideosResponse> {
     const yt = getYoutubeClient();
     const uploadsPlaylistId = await getUploadsPlaylistId(channelId);
 
-    if (!uploadsPlaylistId) return [];
+    if (!uploadsPlaylistId) {
+        return { videos: [], hasMore: false };
+    }
 
     try {
         // Fetch more items than requested to account for filtering
-        const fetchLimit = Math.max(maxResults * 4, 20);
+        const fetchLimit = Math.max(maxResults * 4, 50);
 
         const response = await yt.playlistItems.list({
             key: process.env.YOUTUBE_API_KEY,
             part: ['snippet', 'contentDetails'],
             playlistId: uploadsPlaylistId,
             maxResults: fetchLimit,
+            pageToken: pageToken,
         });
 
         const items = response.data.items || [];
+        const nextPageToken = response.data.nextPageToken;
         const videoIds = items.map((item: any) => item.contentDetails?.videoId).filter(Boolean);
 
         // Fetch details (duration)
@@ -121,28 +134,81 @@ export async function getChannelVideos(channelId: string, maxResults = 10): Prom
             // Filter out empty IDs and short videos (< 5m)
             .filter((v: Video) => v.id && !isTooShort(v.duration));
 
-        return videos.slice(0, maxResults);
+        return {
+            videos: videos.slice(0, maxResults),
+            nextPageToken: nextPageToken || undefined,
+            hasMore: !!nextPageToken,
+        };
     } catch (error) {
         console.error(`Error fetching uploads for channel ${channelId}:`, error);
-        return [];
+        return { videos: [], hasMore: false };
     }
 }
 
-export async function getPersonalizedFeed(channels: Channel[]): Promise<Video[]> {
-    // Increase channel fetch to ensures we have candidates after filtering
-    const channelPromises = channels.map((c) => getChannelVideos(c.id, 5));
+// Legacy function for backward compatibility
+export async function getChannelVideosLegacy(channelId: string, maxResults = 10): Promise<Video[]> {
+    const result = await getChannelVideos(channelId, maxResults);
+    return result.videos;
+}
+
+export interface PersonalizedFeedResponse {
+    videos: Video[];
+    channelTokens: Record<string, string | undefined>; // channelId -> nextPageToken
+    hasMore: boolean;
+}
+
+export async function getPersonalizedFeed(
+    channels: Channel[],
+    maxResultsPerChannel = 10,
+    channelTokens?: Record<string, string | undefined>
+): Promise<PersonalizedFeedResponse> {
+    if (channels.length === 0) {
+        return { videos: [], channelTokens: {}, hasMore: false };
+    }
+
+    // Fetch videos from each channel with pagination
+    const channelPromises = channels.map(async (c) => {
+        const pageToken = channelTokens?.[c.id];
+        const result = await getChannelVideos(c.id, maxResultsPerChannel, pageToken);
+        return {
+            channelId: c.id,
+            videos: result.videos,
+            nextPageToken: result.nextPageToken,
+            hasMore: result.hasMore,
+        };
+    });
 
     const channelResults = await Promise.all(channelPromises);
 
-    const allVideos = channelResults.flat();
+    const allVideos = channelResults.flatMap((r) => r.videos);
 
     // Remove duplicates (by video ID)
     const uniqueVideos = Array.from(new Map(allVideos.map((v) => [v.id, v])).values());
 
     // Sort by publishedAt descending (newest first)
-    return uniqueVideos.sort((a, b) => {
+    const sortedVideos = uniqueVideos.sort((a, b) => {
         return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
+
+    // Build channel tokens map
+    const newChannelTokens: Record<string, string | undefined> = {};
+    channelResults.forEach((r) => {
+        newChannelTokens[r.channelId] = r.nextPageToken;
+    });
+
+    const hasMore = channelResults.some((r) => r.hasMore);
+
+    return {
+        videos: sortedVideos,
+        channelTokens: newChannelTokens,
+        hasMore,
+    };
+}
+
+// Legacy function for backward compatibility
+export async function getPersonalizedFeedLegacy(channels: Channel[]): Promise<Video[]> {
+    const result = await getPersonalizedFeed(channels, 5);
+    return result.videos;
 }
 
 // Helper to search channels (for adding interests)

@@ -2,7 +2,7 @@
 import { getPersonalizedFeed, getChannelVideos } from '../lib/youtube';
 import { UserInterests, Video } from '../lib/types';
 import { getStoredInterests } from '../lib/storage';
-import VideoFeed from './VideoFeed';
+import InfiniteVideoFeed from './InfiniteVideoFeed';
 
 interface FeedFetcherProps {
     searchParams: { [key: string]: string | string[] | undefined };
@@ -16,8 +16,12 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
 
     const hasInterests = interests.channels.length > 0;
 
-    let videos: Video[] = [];
+    let initialVideos: Video[] = [];
     let feedTitle = "Your Personalized Feed";
+    let feedType: 'home' | 'channel' = 'home';
+    let channelId: string | undefined;
+    let initialPageToken: string | undefined;
+    let initialChannelTokens: Record<string, string | undefined> | undefined;
 
     if (hasInterests) {
         if (channelIdFilter) {
@@ -25,17 +29,39 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
             const channel = interests.channels.find(c => c.id === channelIdFilter);
             if (channel) {
                 feedTitle = `Videos from ${channel.title}`;
-                videos = await getChannelVideos(channel.id, 20);
+                feedType = 'channel';
+                channelId = channel.id;
+                const result = await getChannelVideos(channel.id, 20);
+                initialVideos = result.videos;
+                initialPageToken = result.nextPageToken;
             } else {
                 // Channel not in interests (or invalid ID), fallback to home or empty
-                videos = await getChannelVideos(channelIdFilter, 20);
+                feedType = 'channel';
+                channelId = channelIdFilter;
+                const result = await getChannelVideos(channelIdFilter, 20);
+                initialVideos = result.videos;
+                initialPageToken = result.nextPageToken;
                 feedTitle = "Channel Videos";
             }
         } else {
             // Home (Combined Feed)
-            videos = await getPersonalizedFeed(interests.channels);
+            feedType = 'home';
+            const result = await getPersonalizedFeed(interests.channels, 20);
+            initialVideos = result.videos;
+            initialChannelTokens = result.channelTokens;
+            // For home feed, nextPageToken is the channelTokens JSON string
+            initialPageToken = result.hasMore ? JSON.stringify(result.channelTokens) : undefined;
         }
     }
 
-    return <VideoFeed videos={videos} title={feedTitle} />;
+    return (
+        <InfiniteVideoFeed
+            initialVideos={initialVideos}
+            title={feedTitle}
+            feedType={feedType}
+            channelId={channelId}
+            initialPageToken={initialPageToken}
+            initialChannelTokens={initialChannelTokens}
+        />
+    );
 }
