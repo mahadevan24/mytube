@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, PanelLeftClose, PanelLeftOpen, Layers } from 'lucide-react';
+import { Menu, X, PanelLeftClose, PanelLeftOpen, Layers, ArrowUp } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 interface AppShellProps {
@@ -19,6 +19,10 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
     const [sidebarWidth, setSidebarWidth] = useState(320);
     const [isResizing, setIsResizing] = useState(false);
     const sidebarRef = useRef<HTMLElement>(null);
+    const mainRef = useRef<HTMLElement>(null);
+
+    // Back to Top State
+    const [showBackToTop, setShowBackToTop] = useState(false);
 
     // Navigation Hooks for Auto-close
     const pathname = usePathname();
@@ -39,6 +43,27 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [pathname, searchParams]);
+
+    // Scroll Listener for Back to Top
+    useEffect(() => {
+        const main = mainRef.current;
+        if (!main) return;
+
+        const handleScroll = () => {
+            if (main.scrollTop > 300) {
+                setShowBackToTop(true);
+            } else {
+                setShowBackToTop(false);
+            }
+        };
+
+        main.addEventListener('scroll', handleScroll);
+        return () => main.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     // Resizing Logic
     const startResizing = (e: React.MouseEvent) => {
@@ -146,7 +171,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
             </aside>
 
             {/* MAIN CONTENT AREA */}
-            <main className="flex-1 overflow-y-auto w-full relative pt-16 md:pt-0">
+            <main ref={mainRef} className="flex-1 overflow-y-auto w-full relative pt-16 md:pt-0 scroll-smooth">
 
                 {/* Desktop Expand Button (Floating/Fixed) */}
                 {!isDesktopSidebarOpen && (
@@ -158,6 +183,15 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                         <PanelLeftOpen size={20} />
                     </button>
                 )}
+
+                {/* Back to Top Button */}
+                <button
+                    onClick={scrollToTop}
+                    className={`fixed bottom-8 right-8 z-50 p-3 bg-indigo-600 text-white rounded-full shadow-xl hover:bg-indigo-700 hover:scale-110 transition-all duration-300 ${showBackToTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+                    title="Back to Top"
+                >
+                    <ArrowUp size={24} />
+                </button>
 
 
 
