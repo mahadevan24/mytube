@@ -1,31 +1,69 @@
-import fs from 'fs/promises';
-import path from 'path';
+import { supabase } from './supabase';
 import { Channel, UserInterests, Category } from './types';
 
-const DATA_FILE_PATH = path.join(process.cwd(), 'data', 'interests.json');
 const UNCATEGORIZED_ID = 'uncategorized';
 
-// Helper to ensure data file exists and read it
+// Helper to read data from Supabase
 async function readData(): Promise<UserInterests> {
     try {
-        const data = await fs.readFile(DATA_FILE_PATH, 'utf-8');
-        return JSON.parse(data);
+        const { data, error } = await supabase
+            .from('user_data')
+            .select('content')
+            .limit(1)
+            .single();
+
+        if (error) {
+            console.error('Supabase read error:', error);
+            throw error;
+        }
+
+        if (!data) {
+            // Default if no data found
+            return {
+                channels: [],
+                categories: [{ id: UNCATEGORIZED_ID, name: 'Channels', channelIds: [] }]
+            };
+        }
+
+        return data.content as UserInterests;
     } catch (error) {
-        // If file doesn't exist or error, return default structure
-        const defaultData: UserInterests = {
+        console.error('Error reading data:', error);
+        // Return default structure on error to prevent app crash
+        return {
             channels: [],
             categories: [{ id: UNCATEGORIZED_ID, name: 'Channels', channelIds: [] }]
         };
-        // Try to write the default if it was missing
-        try {
-            await writeData(defaultData);
-        } catch (e) { /* ignore write error during read */ }
-        return defaultData;
     }
 }
 
 async function writeData(data: UserInterests): Promise<void> {
-    await fs.writeFile(DATA_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    try {
+        // Check if a row exists
+        const { data: rows, error: readError } = await supabase
+            .from('user_data')
+            .select('id')
+            .limit(1);
+
+        if (readError) throw readError;
+
+        if (rows && rows.length > 0) {
+            // Update existing row
+            const { error } = await supabase
+                .from('user_data')
+                .update({ content: data })
+                .eq('id', rows[0].id);
+            if (error) throw error;
+        } else {
+            // Insert new row
+            const { error } = await supabase
+                .from('user_data')
+                .insert({ content: data });
+            if (error) throw error;
+        }
+    } catch (error) {
+        console.error('Error writing data to Supabase:', error);
+        throw error;
+    }
 }
 
 export const getStoredInterests = async (): Promise<UserInterests> => {
@@ -91,7 +129,7 @@ export const removeChannel = async (channelId: string) => {
 export const addCategory = async (name: string) => {
     const interests = await readData();
     const newCategory: Category = {
-        id: Math.random().toString(36).substring(2, 9),
+        id: Math.random().toString(36).substring(2, 9), // TODO: Use UUID?
         name,
         channelIds: []
     };
@@ -138,15 +176,8 @@ export const renameCategory = async (categoryId: string, newName: string) => {
 
 export const updateCategoriesState = async (newCategories: Category[]) => {
     // We only update the categories array structure (order/content), 
-    // but we must preserve the main channel list integrity from the file to be safe, 
-    // although simpler is just to update the categories part.
+    // but we must preserve the main channel list integrity.
     const interests = await readData();
     interests.categories = newCategories;
     await writeData(interests);
 };
-
-// No-op for saveInterests as we use fs now, but kept for compatibility if needed by other files temporarily? 
-// No, I should remove it as it was for cookies.
-// But InterestManager might still be importing it? 
-// I removed saveInterests import from InterestManager in Step 54!
-// So I don't need to export it.
