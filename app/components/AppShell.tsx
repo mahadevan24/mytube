@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Menu, X, PanelLeftClose, PanelLeftOpen, Layers } from 'lucide-react';
-
+import { usePathname, useSearchParams } from 'next/navigation';
 
 interface AppShellProps {
     sidebar: React.ReactNode;
@@ -15,6 +15,15 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
 
+    // Resizable Sidebar State
+    const [sidebarWidth, setSidebarWidth] = useState(320);
+    const [isResizing, setIsResizing] = useState(false);
+    const sidebarRef = useRef<HTMLElement>(null);
+
+    // Navigation Hooks for Auto-close
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
     // Close mobile menu on resize to desktop
     useEffect(() => {
         const handleResize = () => {
@@ -25,6 +34,50 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    // Auto-close mobile menu on navigation
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname, searchParams]);
+
+    // Resizing Logic
+    const startResizing = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsResizing(true);
+    };
+
+    useEffect(() => {
+        const resize = (e: MouseEvent) => {
+            if (isResizing) {
+                let newWidth = e.clientX;
+                if (newWidth < 240) newWidth = 240; // Min width
+                if (newWidth > 600) newWidth = 600; // Max width
+                setSidebarWidth(newWidth);
+            }
+        };
+
+        const stopResizing = () => {
+            setIsResizing(false);
+        };
+
+        if (isResizing) {
+            window.addEventListener('mousemove', resize);
+            window.addEventListener('mouseup', stopResizing);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none'; // Prevent text selection
+        } else {
+            document.body.style.cursor = 'auto';
+            document.body.style.userSelect = 'auto';
+        }
+
+        return () => {
+            window.removeEventListener('mousemove', resize);
+            window.removeEventListener('mouseup', stopResizing);
+            document.body.style.cursor = 'auto'; // cleanup
+            document.body.style.userSelect = 'auto';
+        };
+    }, [isResizing]);
+
 
     return (
         <div className="flex h-screen bg-white dark:bg-black text-neutral-900 dark:text-white font-sans overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200">
@@ -59,8 +112,10 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
 
             {/* DESKTOP SIDEBAR */}
             <aside
+                ref={sidebarRef}
+                style={{ width: isDesktopSidebarOpen ? sidebarWidth : 0 }}
                 className={`hidden md:flex flex-col border-r border-neutral-200 dark:border-white/5 bg-neutral-50 dark:bg-neutral-900/50 transition-all duration-300 ease-in-out relative
-                 ${isDesktopSidebarOpen ? 'w-80 translate-x-0 opacity-100' : 'w-0 -translate-x-full opacity-0 overflow-hidden border-none'}`}
+                 ${isDesktopSidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 overflow-hidden border-none'}`}
             >
                 <div className="p-6 flex items-center justify-between flex-shrink-0">
                     <h1 className="text-xl font-bold tracking-wide flex items-center gap-3 whitespace-nowrap overflow-hidden">
@@ -80,6 +135,14 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                 <div className="flex-1 overflow-hidden">
                     {sidebar}
                 </div>
+
+                {/* Drag Handle */}
+                {isDesktopSidebarOpen && (
+                    <div
+                        className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-500/50 transition-colors z-10 ${isResizing ? 'bg-indigo-500' : ''}`}
+                        onMouseDown={startResizing}
+                    />
+                )}
             </aside>
 
             {/* MAIN CONTENT AREA */}
