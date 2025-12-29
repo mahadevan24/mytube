@@ -116,7 +116,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                     >
                         {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
-                    <h1 className="text-lg font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-neutral-800 to-neutral-500 dark:from-white dark:to-neutral-400">
+                    <h1 className="text-xl font-bold tracking-wide text-neutral-900 dark:text-white">
                         MyTube
                     </h1>
                 </div>
@@ -127,7 +127,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
             {isMobileMenuOpen && (
                 <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setIsMobileMenuOpen(false)}>
                     <div
-                        className="absolute top-16 left-0 bottom-0 w-3/4 max-w-sm bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-white/5 shadow-2xl p-4 animate-in slide-in-from-left duration-300"
+                        className="absolute top-16 left-0 bottom-0 w-3/4 max-w-sm bg-gradient-to-br from-neutral-50 via-green-50/15 to-yellow-50/10 dark:from-neutral-900 dark:via-green-950/10 dark:to-yellow-950/5 border-r border-neutral-200 dark:border-white/5 shadow-2xl p-4 animate-in slide-in-from-left duration-300"
                         onClick={e => e.stopPropagation()}
                     >
                         {sidebar}
@@ -139,12 +139,12 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
             <aside
                 ref={sidebarRef}
                 style={{ width: isDesktopSidebarOpen ? sidebarWidth : 0 }}
-                className={`hidden md:flex flex-col border-r border-neutral-200 dark:border-white/5 bg-neutral-50 dark:bg-neutral-900/50 transition-all duration-300 ease-in-out relative
+                className={`hidden md:flex flex-col border-r border-neutral-200 dark:border-white/5 bg-gradient-to-br from-neutral-50 via-green-50/15 to-yellow-50/10 dark:from-neutral-900 dark:via-green-950/10 dark:to-yellow-950/5 transition-all duration-300 ease-in-out relative
                  ${isDesktopSidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 overflow-hidden border-none'}`}
             >
-                <div className="p-6 flex items-center justify-between flex-shrink-0">
-                    <h1 className="text-xl font-bold tracking-wide flex items-center gap-3 whitespace-nowrap overflow-hidden">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-neutral-800 to-neutral-500 dark:from-white dark:to-neutral-400">MyTube</span>
+                <div className="p-6 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-green-500/5 via-yellow-500/3 to-lime-500/5 dark:from-green-500/3 dark:via-yellow-500/2 dark:to-lime-500/3">
+                    <h1 className="text-xl font-bold tracking-wide text-neutral-900 dark:text-white flex items-center gap-3 whitespace-nowrap overflow-hidden">
+                        MyTube
                     </h1>
                     <div className="flex items-center gap-2">
                         {themeToggle}
@@ -164,7 +164,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                 {/* Drag Handle */}
                 {isDesktopSidebarOpen && (
                     <div
-                        className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-500/50 transition-colors z-10 ${isResizing ? 'bg-indigo-500' : ''}`}
+                        className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-green-400/30 transition-colors z-10 ${isResizing ? 'bg-green-400/40' : ''}`}
                         onMouseDown={startResizing}
                     />
                 )}

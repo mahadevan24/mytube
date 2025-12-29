@@ -31,7 +31,7 @@ export default function ThemeToggle() {
                 />
                 <Moon
                     size={20}
-                    className={`absolute top-0 left-0 transition-all duration-300 ${isDark ? 'rotate-0 scale-100 opacity-100 text-indigo-400' : '-rotate-90 scale-0 opacity-0'}`}
+                    className={`absolute top-0 left-0 transition-all duration-300 ${isDark ? 'rotate-0 scale-100 opacity-100 text-green-400/80' : '-rotate-90 scale-0 opacity-0'}`}
                 />
             </div>
             <span className="sr-only">Toggle theme</span>

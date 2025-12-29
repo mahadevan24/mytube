@@ -95,7 +95,7 @@ export default function VideoFeed({ initialVideos, title, fetchMore, initialPage
 
     return (
         <>
-            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-6">{title}</h2>
+            <h2 className="text-xl font-bold tracking-wide text-neutral-900 dark:text-white mb-6">{title}</h2>
             {videos.length === 0 && !isLoading ? (
                 <div className="text-center text-neutral-500 mt-20">
                     <p>No videos found matching your criteria.</p>
