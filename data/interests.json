@@ -1,0 +1,41 @@
+{
+  "channels": [
+    {
+      "id": "UCzB7YGrrxDC_POenf86H3_Q",
+      "title": "Ryan Peterman",
+      "thumbnail": "https://yt3.ggpht.com/ytc/AIdro_kCqRLvJy8gnJxpETdXRj9Ii4eiiQUei7N4WHmvFREE_Sos=s240-c-k-c0xffffffff-no-rj-mo"
+    },
+    {
+      "id": "UCFbNIlppjAuEX4znoulh0Cw",
+      "title": "Web Dev Simplified",
+      "thumbnail": "https://yt3.ggpht.com/ytc/AIdro_nO3F7DfVXaf6wsHPS_hF327ggeWUCwZSELb5DCWBL1aw=s240-c-k-c0xffffffff-no-rj-mo"
+    },
+    {
+      "id": "UCdMz6KKEDW_1Qqas-ya7S6w",
+      "title": "Beyond Coding",
+      "thumbnail": "https://yt3.ggpht.com/4Ump-JVHo6tlv6h37jR8G6-uXH2yr2yhrg1D3iPyL4_bnRChcftLo-wDWBomFLw8LU-SSgzKVQ=s240-c-k-c0xffffffff-no-rj-mo"
+    }
+  ],
+  "categories": [
+    {
+      "id": "uncategorized",
+      "name": "Channels",
+      "channelIds": []
+    },
+    {
+      "id": "fcegx72",
+      "name": "Software Engineering",
+      "channelIds": [
+        "UCzB7YGrrxDC_POenf86H3_Q"
+      ]
+    },
+    {
+      "id": "31t5kav",
+      "name": "Coding",
+      "channelIds": [
+        "UCFbNIlppjAuEX4znoulh0Cw",
+        "UCdMz6KKEDW_1Qqas-ya7S6w"
+      ]
+    }
+  ]
+}
