@@ -200,6 +200,9 @@ export default function InterestManager() {
     const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
     const [editCategoryName, setEditCategoryName] = useState('');
 
+    // Loading states
+    const [addingChannelId, setAddingChannelId] = useState<string | null>(null);
+
     // Dragging state
     const [activeDragChannel, setActiveDragChannel] = useState<Channel | null>(null);
 
@@ -236,12 +239,16 @@ export default function InterestManager() {
     };
 
     const handleAddChannel = async (channel: Channel) => {
-        // Optimistic update
-        setChannelResults([]);
-        setChannelQuery('');
-
-        await addChannelAction(channel);
-        refreshData();
+        setAddingChannelId(channel.id);
+        try {
+            await addChannelAction(channel);
+            // Optimistic update - clear search
+            setChannelResults([]);
+            setChannelQuery('');
+            refreshData();
+        } finally {
+            setAddingChannelId(null);
+        }
     };
 
     const handleRemoveChannel = async (e: React.MouseEvent, id: string) => {
@@ -499,10 +506,19 @@ export default function InterestManager() {
                         <button onClick={() => setChannelResults([])}><X size={14} className="text-neutral-500 hover:text-white" /></button>
                     </div>
                     {channelResults.map(c => (
-                        <button key={c.id} onClick={() => handleAddChannel(c)} className="flex items-center gap-3 w-full text-left hover:bg-white/10 p-2 rounded-lg">
+                        <button
+                            key={c.id}
+                            onClick={() => handleAddChannel(c)}
+                            disabled={addingChannelId === c.id}
+                            className={`flex items-center gap-3 w-full text-left hover:bg-white/10 p-2 rounded-lg ${addingChannelId === c.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
                             {c.thumbnail && <img src={c.thumbnail} className="w-8 h-8 rounded-full" />}
                             <span className="text-sm text-neutral-200 truncate flex-1">{c.title}</span>
-                            <Plus size={14} className="text-indigo-400" />
+                            {addingChannelId === c.id ? (
+                                <span className="text-xs text-indigo-400 font-medium animate-pulse">Adding...</span>
+                            ) : (
+                                <Plus size={14} className="text-indigo-400" />
+                            )}
                         </button>
                     ))}
                 </div>
