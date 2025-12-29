@@ -121,7 +121,7 @@ function CategoryList({
         <div className="flex flex-col gap-1">
             {/* Category Header */}
             {category.id !== 'uncategorized' && (
-                <div className="group flex items-center justify-between px-2 py-1 text-neutral-400 hover:text-green-400/70 transition-colors">
+                <div className="group flex items-center justify-between pl-6 py-1 text-neutral-400 hover:text-green-400/70 transition-colors">
                     {editingCategoryId === category.id ? (
                         <div className="flex items-center gap-2 flex-1">
                             <input
@@ -403,12 +403,12 @@ export default function InterestManager() {
     const allChannelsMap = new Map(interests.channels.map(c => [c.id, c]));
 
     return (
-        <div className="flex flex-col gap-6 h-full">
+        <div className="flex flex-col gap-6 h-full pr-6">
             {/* Navigation */}
             <div className="flex flex-col gap-2">
                 <Link
                     href="/"
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-sm ${isHome
+                    className={`flex items-center gap-3 pl-6 pr-4 py-3 rounded-xl transition-all duration-200 group text-sm ${isHome
                         ? 'bg-gradient-to-r from-green-500/10 via-yellow-500/8 to-lime-500/8 text-green-600 dark:from-green-500/15 dark:via-yellow-500/12 dark:to-lime-500/12 dark:text-green-300 border border-green-300/30 dark:border-green-500/25 shadow-sm'
                         : 'text-neutral-600 dark:text-neutral-400 hover:bg-gradient-to-r hover:from-green-500/5 hover:via-yellow-500/3 hover:to-lime-500/5 dark:hover:from-green-500/5 dark:hover:via-yellow-500/3 dark:hover:to-lime-500/5 hover:text-neutral-900 dark:hover:text-white'
                         }`}
@@ -427,9 +427,9 @@ export default function InterestManager() {
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
-                <div className="flex flex-col gap-4 overflow-y-auto pb-10 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent pr-2 relative flex-1">
-                    <div className="flex items-center justify-between px-2">
-                        <h3 className="text-xs font-bold text-neutral-600 dark:bg-gradient-to-r dark:from-green-300 dark:to-yellow-300 dark:bg-clip-text dark:text-transparent uppercase tracking-wider">Channels</h3>
+                <div className="flex flex-col gap-4 overflow-y-auto pb-10 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent relative flex-1">
+                    <div className="flex items-center justify-between pl-6">
+                        <h3 className="text-xs font-bold text-neutral-600 dark:bg-gradient-to-r dark:from-green-300 dark:to-yellow-300 dark:bg-clip-text dark:text-transparent uppercase tracking-wider m-0">Channels</h3>
                         <button
                             onClick={() => setIsAddingCategory(true)}
                             className="text-neutral-500 hover:text-green-500/70 transition-colors"

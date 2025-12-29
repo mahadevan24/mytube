@@ -142,8 +142,8 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                 className={`hidden md:flex flex-col border-r border-neutral-200 dark:border-white/5 bg-gradient-to-br from-neutral-50 via-green-50/15 to-yellow-50/10 dark:from-neutral-900 dark:via-green-950/10 dark:to-yellow-950/5 transition-all duration-300 ease-in-out relative
                  ${isDesktopSidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 overflow-hidden border-none'}`}
             >
-                <div className="p-6 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-green-500/5 via-yellow-500/3 to-lime-500/5 dark:from-green-500/3 dark:via-yellow-500/2 dark:to-lime-500/3">
-                    <h1 className="text-xl font-bold tracking-wide text-neutral-900 dark:text-white flex items-center gap-3 whitespace-nowrap overflow-hidden">
+                <div className="px-6 py-6 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-green-500/5 via-yellow-500/3 to-lime-500/5 dark:from-green-500/3 dark:via-yellow-500/2 dark:to-lime-500/3">
+                    <h1 className="text-xl font-bold tracking-wide text-neutral-900 dark:text-white flex items-center gap-3 whitespace-nowrap overflow-hidden m-0">
                         MyTube
                     </h1>
                     <div className="flex items-center gap-2">
