@@ -14,6 +14,7 @@ interface AppShellProps {
 export default function AppShell({ sidebar, children, themeToggle, isEmpty }: AppShellProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
     // Resizable Sidebar State
     const [sidebarWidth, setSidebarWidth] = useState(320);
@@ -27,6 +28,11 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
     // Navigation Hooks for Auto-close
     const pathname = usePathname();
     const searchParams = useSearchParams();
+
+    // Mark as mounted after hydration
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Close mobile menu on resize to desktop
     useEffect(() => {
@@ -114,7 +120,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="p-2 -ml-2 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                     >
-                        {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                        {mounted ? (isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />) : <div className="w-5 h-5" />}
                     </button>
                     <h1 className="text-xl font-bold tracking-wide text-neutral-900 dark:text-white">
                         MyTube
@@ -153,7 +159,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                             className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors p-1"
                             title="Collapse Sidebar"
                         >
-                            <PanelLeftClose size={18} />
+                            {mounted ? <PanelLeftClose size={18} /> : <div className="w-[18px] h-[18px]" />}
                         </button>
                     </div>
                 </div>
@@ -180,7 +186,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                         className="hidden md:flex absolute top-4 left-4 z-30 p-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 shadow-lg rounded-lg text-neutral-500 hover:text-indigo-500 transition-all hover:scale-105"
                         title="Open Sidebar"
                     >
-                        <PanelLeftOpen size={20} />
+                        {mounted ? <PanelLeftOpen size={20} /> : <div className="w-5 h-5" />}
                     </button>
                 )}
 
@@ -190,7 +196,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                     className={`fixed bottom-8 right-8 z-50 p-3 bg-indigo-600 text-white rounded-full shadow-xl hover:bg-indigo-700 hover:scale-110 transition-all duration-300 ${showBackToTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
                     title="Back to Top"
                 >
-                    <ArrowUp size={24} />
+                    {mounted ? <ArrowUp size={24} /> : <div className="w-6 h-6" />}
                 </button>
 
 
@@ -201,7 +207,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                     {isEmpty ? (
                         <div className="flex flex-col items-center justify-center h-[70vh] text-center space-y-6 animate-in fade-in duration-700">
                             <div className="w-24 h-24 bg-white dark:bg-neutral-900/80 rounded-3xl flex items-center justify-center border border-neutral-200 dark:border-white/5 shadow-2xl">
-                                <Layers size={48} className="text-indigo-500" />
+                                {mounted ? <Layers size={48} className="text-indigo-500" /> : <div className="w-12 h-12" />}
                             </div>
                             <div className="space-y-2 max-w-md px-4">
                                 <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Your Personal Dashboard</h2>

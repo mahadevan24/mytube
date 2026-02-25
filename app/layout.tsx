@@ -17,7 +17,7 @@ export default function RootLayout({
       <body className="antialiased transition-colors duration-300" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Video } from '../lib/types';
 import Link from 'next/link';
 import { Clock } from 'lucide-react';
@@ -47,6 +50,12 @@ interface VideoCardProps {
 }
 
 export default function VideoCard({ video, onPlay }: VideoCardProps) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const handleClick = (e: React.MouseEvent) => {
         if (onPlay) {
             e.preventDefault();
@@ -91,8 +100,12 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                         {video.channelTitle}
                     </Link>
                     <div className="text-neutral-500 text-[10px] flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900/50 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-white/5">
-                        <Clock size={10} className="text-neutral-600" />
-                        {timeAgo(video.publishedAt)}
+                        {mounted && (
+                            <>
+                                <Clock size={10} className="text-neutral-600" />
+                                {timeAgo(video.publishedAt)}
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
