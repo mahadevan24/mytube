@@ -179,15 +179,25 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
             {/* MAIN CONTENT AREA */}
             <main ref={mainRef} className="flex-1 overflow-y-auto w-full relative pt-16 md:pt-0 scroll-smooth">
 
-                {/* Desktop Expand Button (Floating/Fixed) */}
+                {/* Desktop Expand Header Bar (when sidebar is closed) */}
                 {!isDesktopSidebarOpen && (
-                    <button
-                        onClick={() => setIsDesktopSidebarOpen(true)}
-                        className="hidden md:flex absolute top-4 left-4 z-30 p-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 shadow-lg rounded-lg text-neutral-500 hover:text-indigo-500 transition-all hover:scale-105"
-                        title="Open Sidebar"
-                    >
-                        {mounted ? <PanelLeftOpen size={20} /> : <div className="w-5 h-5" />}
-                    </button>
+                    <header className="hidden md:flex sticky top-0 z-30 h-14 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-neutral-200/80 dark:border-white/5 items-center justify-between px-6 transition-all">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsDesktopSidebarOpen(true)}
+                                className="p-2 -ml-2 text-neutral-600 dark:text-neutral-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-2 group"
+                                title="Open Sidebar"
+                            >
+                                {mounted ? <PanelLeftOpen size={20} className="group-hover:scale-110 transition-transform" /> : <div className="w-5 h-5" />}
+                                <span className="font-bold text-base text-neutral-900 dark:text-white tracking-tight">
+                                    MyTube
+                                </span>
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {themeToggle}
+                        </div>
+                    </header>
                 )}
 
                 {/* Back to Top Button */}

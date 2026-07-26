@@ -37,12 +37,12 @@ body {
 /* Custom Scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #333 transparent;
+  scrollbar-color: rgba(160, 160, 160, 0.25) transparent;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -50,10 +50,22 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #333;
+  background-color: rgba(160, 160, 160, 0.25);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #555;
+  background-color: rgba(160, 160, 160, 0.45);
+}
+
+/* Hide scrollbar utility */
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

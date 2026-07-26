@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     getInterestsAction,
     addChannelAction,
     removeChannelAction,
+    moveChannelCategoryAction,
     addCategoryAction,
     removeCategoryAction,
     renameCategoryAction,
@@ -14,7 +15,7 @@ import {
     searchChannelsAction
 } from '../actions';
 import { Channel, UserInterests, Category } from '../lib/types';
-import { Search, Plus, X, Tv, Trash2, GripVertical, FolderPlus, Edit2, Check, Loader2, Folder } from 'lucide-react';
+import { Search, Plus, X, Tv, Trash2, GripVertical, FolderPlus, Edit2, Check, Loader2, Folder, FolderInput, ArrowUpToLine, ChevronUp, ChevronDown } from 'lucide-react';
 import { useToast } from './Toast';
 import {
     DndContext,
@@ -43,14 +44,34 @@ function SortableChannelItem({
     channel, 
     isActive, 
     onRemove, 
-    isOverlay 
+    isOverlay,
+    categories,
+    currentCategoryId,
+    onMoveChannel
 }: { 
     channel: Channel; 
     isActive: boolean; 
     onRemove: (e: React.MouseEvent) => void; 
     isOverlay?: boolean;
+    categories?: Category[];
+    currentCategoryId?: string;
+    onMoveChannel?: (channelId: string, targetCategoryId: string, categoryName: string) => void;
 }) {
     const [imgError, setImgError] = useState(false);
+    const [isMoveOpen, setIsMoveOpen] = useState(false);
+    const moveMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!isMoveOpen) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (moveMenuRef.current && !moveMenuRef.current.contains(e.target as Node)) {
+                setIsMoveOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isMoveOpen]);
+
     const {
         attributes,
         listeners,
@@ -67,20 +88,22 @@ function SortableChannelItem({
     };
 
     return (
-        <li ref={setNodeRef} style={style} className={`text-sm group overflow-hidden transition-all duration-200 ${isOverlay ? 'shadow-2xl scale-105 z-50 bg-neutral-900 border border-emerald-500/40 rounded-xl' : ''}`}>
-            <Link
-                href={`/?channelId=${channel.id}`}
-                className={`flex items-center justify-between px-2.5 py-1.5 w-full transition-all duration-200 ${isActive
-                    ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold border-l-2 border-emerald-500 rounded-r-xl rounded-l-sm shadow-sm'
-                    : 'text-neutral-700 dark:text-neutral-300 border-l-2 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white rounded-r-xl rounded-l-sm'
-                    }`}
+        <li ref={setNodeRef} style={style} className={`text-sm group relative transition-all duration-200 ${isOverlay ? 'shadow-2xl scale-105 z-50 bg-neutral-900 border border-emerald-500/40 rounded-xl' : ''}`}>
+            <div className={`flex items-center justify-between px-2.5 py-1.5 w-full transition-all duration-200 ${isActive
+                ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold border-l-2 border-emerald-500 rounded-r-xl rounded-l-sm shadow-sm'
+                : 'text-neutral-700 dark:text-neutral-300 border-l-2 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white rounded-r-xl rounded-l-sm'
+                }`}
             >
-                <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
+                <Link
+                    href={`/?channelId=${channel.id}`}
+                    className="flex items-center gap-2 overflow-hidden flex-1 min-w-0"
+                >
                     <div 
                         {...attributes} 
                         {...listeners} 
                         className="cursor-grab active:cursor-grabbing text-neutral-400 opacity-0 group-hover:opacity-100 hover:text-neutral-600 dark:hover:text-neutral-200 flex-shrink-0 transition-opacity duration-200 touch-none"
                         title="Drag to move"
+                        onClick={(e) => e.preventDefault()}
                     >
                         <GripVertical size={14} />
                     </div>
@@ -98,16 +121,71 @@ function SortableChannelItem({
                         </div>
                     )}
                     <span className="truncate text-xs font-medium tracking-tight">{channel.title}</span>
+                </Link>
+
+                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1">
+                    {categories && categories.length > 0 && onMoveChannel && (
+                        <div className="relative" ref={moveMenuRef}>
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsMoveOpen(!isMoveOpen);
+                                }}
+                                className="text-neutral-400 hover:text-emerald-600 dark:text-neutral-500 dark:hover:text-emerald-400 p-1 hover:bg-emerald-500/10 rounded-md transition-all duration-150"
+                                title="Move to category"
+                            >
+                                <FolderInput size={13} />
+                            </button>
+
+                            {isMoveOpen && (
+                                <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl py-1 animate-in fade-in zoom-in-95 duration-150">
+                                    <div className="px-2.5 py-1 border-b border-neutral-100 dark:border-neutral-800 text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                                        Move to category
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto py-1">
+                                        {categories.map((cat) => {
+                                            const isCurrentCat = currentCategoryId === cat.id;
+                                            return (
+                                                <button
+                                                    key={cat.id}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setIsMoveOpen(false);
+                                                        if (!isCurrentCat) {
+                                                            onMoveChannel(channel.id, cat.id, cat.name);
+                                                        }
+                                                    }}
+                                                    className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-left transition-colors ${isCurrentCat
+                                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
+                                                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2 truncate">
+                                                        <Folder size={12} className={isCurrentCat ? 'text-emerald-500' : 'text-neutral-400'} />
+                                                        <span className="truncate">{cat.name}</span>
+                                                    </div>
+                                                    {isCurrentCat && <Check size={12} className="text-emerald-500 flex-shrink-0" />}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <button
+                        onClick={onRemove}
+                        className="text-neutral-400 hover:text-rose-500 dark:text-neutral-500 dark:hover:text-rose-400 p-1 hover:bg-rose-500/10 rounded-md transition-all duration-150"
+                        aria-label="Remove channel"
+                        title="Remove channel"
+                    >
+                        <X size={13} />
+                    </button>
                 </div>
-                <button
-                    onClick={onRemove}
-                    className="text-neutral-400 hover:text-rose-500 dark:text-neutral-500 dark:hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all duration-150 p-1 hover:bg-rose-500/10 rounded-md flex-shrink-0 ml-1.5"
-                    aria-label="Remove channel"
-                    title="Remove channel"
-                >
-                    <X size={13} />
-                </button>
-            </Link>
+            </div>
         </li>
     );
 }
@@ -115,6 +193,8 @@ function SortableChannelItem({
 // --- Category Droppable & Sortable List ---
 function CategoryList({
     category,
+    categoryIndex,
+    totalCategories,
     allChannelsMap,
     currentChannelId,
     currentCategoryId,
@@ -124,9 +204,16 @@ function CategoryList({
     handleRemoveChannel,
     saveCategoryRename,
     startEditingCategory,
-    handleDeleteCategory
+    handleDeleteCategory,
+    categories,
+    handleMoveChannel,
+    onMoveCategoryToTop,
+    onMoveCategoryUp,
+    onMoveCategoryDown
 }: {
     category: Category;
+    categoryIndex: number;
+    totalCategories: number;
     allChannelsMap: Map<string, Channel>;
     currentChannelId: string | null;
     currentCategoryId: string | null;
@@ -137,13 +224,34 @@ function CategoryList({
     saveCategoryRename: (id: string) => void;
     startEditingCategory: (id: string, name: string) => void;
     handleDeleteCategory: (e: React.MouseEvent, id: string, name: string) => void;
+    categories: Category[];
+    handleMoveChannel: (channelId: string, targetCategoryId: string, categoryName: string) => void;
+    onMoveCategoryToTop: (categoryId: string) => void;
+    onMoveCategoryUp: (categoryId: string) => void;
+    onMoveCategoryDown: (categoryId: string) => void;
 }) {
-    const { setNodeRef, isOver } = useDroppable({
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+        isOver
+    } = useSortable({
         id: category.id,
         data: { type: 'CATEGORY', category }
     });
 
-    const isCategoryActive = currentCategoryId === category.id;
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+    };
+
+    const isCategoryActive = currentCategoryId
+        ? currentCategoryId === category.id
+        : (!currentChannelId && category.name.trim().toLowerCase() === 'focus');
     const channelCount = category.channelIds.length;
 
     // Do not render empty uncategorized container to prevent huge top gaps
@@ -152,7 +260,7 @@ function CategoryList({
     }
 
     return (
-        <div className="flex flex-col gap-1">
+        <div ref={setNodeRef} style={style} className="flex flex-col gap-1">
             {/* Category Header */}
             {category.id !== 'uncategorized' && (
                 <div className="group flex items-center justify-between px-1 py-1 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
@@ -176,24 +284,75 @@ function CategoryList({
                         </div>
                     ) : (
                         <div className="flex items-center justify-between w-full">
-                            <Link
-                                href={`/?categoryId=${category.id}`}
-                                className={`flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase flex-1 rounded-lg px-1.5 py-1 transition-all ${isCategoryActive
-                                    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                                    : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-                                    }`}
-                                onDoubleClick={(e) => {
-                                    e.preventDefault();
-                                    startEditingCategory(category.id, category.name);
-                                }}
-                            >
-                                <Folder size={13} className={isCategoryActive ? "text-emerald-500 fill-emerald-500/20" : "text-neutral-400"} />
-                                <span className="truncate">{category.name}</span>
-                                <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-neutral-200/70 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 group-hover:bg-emerald-500/15 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                                    {channelCount}
-                                </span>
-                            </Link>
-                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-1 overflow-hidden flex-1 min-w-0">
+                                <div
+                                    {...attributes}
+                                    {...listeners}
+                                    className="cursor-grab active:cursor-grabbing text-neutral-400 opacity-0 group-hover:opacity-100 hover:text-neutral-600 dark:hover:text-neutral-200 p-0.5 flex-shrink-0 transition-opacity duration-200 touch-none"
+                                    title="Drag to reorder category"
+                                    onClick={(e) => e.preventDefault()}
+                                >
+                                    <GripVertical size={13} />
+                                </div>
+                                <Link
+                                    href={`/?categoryId=${category.id}`}
+                                    className={`flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase truncate rounded-lg px-1 py-1 transition-all ${isCategoryActive
+                                        ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                                        : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                                        }`}
+                                    onDoubleClick={(e) => {
+                                        e.preventDefault();
+                                        startEditingCategory(category.id, category.name);
+                                    }}
+                                >
+                                    <Folder size={13} className={isCategoryActive ? "text-emerald-500 fill-emerald-500/20" : "text-neutral-400"} />
+                                    <span className="truncate">{category.name}</span>
+                                    <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-neutral-200/70 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 group-hover:bg-emerald-500/15 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                        {channelCount}
+                                    </span>
+                                </Link>
+                            </div>
+
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                {categoryIndex > 0 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            onMoveCategoryToTop(category.id);
+                                        }}
+                                        className="p-1 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10 rounded-md transition-colors"
+                                        title="Move to top priority"
+                                    >
+                                        <ArrowUpToLine size={12} />
+                                    </button>
+                                )}
+                                {categoryIndex > 0 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            onMoveCategoryUp(category.id);
+                                        }}
+                                        className="p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-colors"
+                                        title="Move category up"
+                                    >
+                                        <ChevronUp size={12} />
+                                    </button>
+                                )}
+                                {categoryIndex < totalCategories - 1 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            onMoveCategoryDown(category.id);
+                                        }}
+                                        className="p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-colors"
+                                        title="Move category down"
+                                    >
+                                        <ChevronDown size={12} />
+                                    </button>
+                                )}
                                 <button
                                     onClick={(e) => {
                                         e.preventDefault();
@@ -227,7 +386,6 @@ function CategoryList({
                 strategy={verticalListSortingStrategy}
             >
                 <ul
-                    ref={setNodeRef}
                     className={`space-y-1 rounded-xl p-0.5 transition-all duration-200 border ${isOver
                         ? 'bg-emerald-500/10 border-emerald-500/40 shadow-inner'
                         : 'border-transparent'
@@ -242,6 +400,9 @@ function CategoryList({
                                 channel={channel}
                                 isActive={currentChannelId === channel.id}
                                 onRemove={(e) => handleRemoveChannel(e, channel.id, channel.title)}
+                                categories={categories}
+                                currentCategoryId={category.id}
+                                onMoveChannel={handleMoveChannel}
                             />
                         );
                     })}
@@ -264,6 +425,9 @@ export default function InterestManager() {
     const [channelResults, setChannelResults] = useState<Channel[]>([]);
     const [isSearching, setIsSearching] = useState(false);
 
+    // Target category for adding channels via search
+    const [targetCategoryId, setTargetCategoryId] = useState<string>('uncategorized');
+
     // Category management state
     const [newCategoryName, setNewCategoryName] = useState('');
     const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -275,6 +439,46 @@ export default function InterestManager() {
 
     // Dragging state
     const [activeDragChannel, setActiveDragChannel] = useState<Channel | null>(null);
+    const [activeDragCategory, setActiveDragCategory] = useState<Category | null>(null);
+
+    // --- Category Reordering Handlers ---
+
+    const handleMoveCategoryToTop = async (categoryId: string) => {
+        if (!interests) return;
+        const catIndex = interests.categories.findIndex(c => c.id === categoryId);
+        if (catIndex <= 0) return;
+
+        const targetCat = interests.categories[catIndex];
+        const newCategories = [
+            targetCat,
+            ...interests.categories.filter(c => c.id !== categoryId)
+        ];
+        setInterests({ ...interests, categories: newCategories });
+        await updateCategoriesStateAction(newCategories);
+        showToast(`"${targetCat.name}" moved to top priority`, 'success');
+    };
+
+    const handleMoveCategoryUp = async (categoryId: string) => {
+        if (!interests) return;
+        const index = interests.categories.findIndex(c => c.id === categoryId);
+        if (index <= 0) return;
+
+        const newCategories = arrayMove(interests.categories, index, index - 1);
+        setInterests({ ...interests, categories: newCategories });
+        await updateCategoriesStateAction(newCategories);
+        showToast(`Moved "${interests.categories[index].name}" up`, 'info');
+    };
+
+    const handleMoveCategoryDown = async (categoryId: string) => {
+        if (!interests) return;
+        const index = interests.categories.findIndex(c => c.id === categoryId);
+        if (index === -1 || index >= interests.categories.length - 1) return;
+
+        const newCategories = arrayMove(interests.categories, index, index + 1);
+        setInterests({ ...interests, categories: newCategories });
+        await updateCategoriesStateAction(newCategories);
+        showToast(`Moved "${interests.categories[index].name}" down`, 'info');
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -284,6 +488,12 @@ export default function InterestManager() {
     useEffect(() => {
         getInterestsAction().then(setInterests);
     }, []);
+
+    useEffect(() => {
+        if (currentCategoryId) {
+            setTargetCategoryId(currentCategoryId);
+        }
+    }, [currentCategoryId]);
 
     const refreshData = async () => {
         const updated = await getInterestsAction();
@@ -311,10 +521,12 @@ export default function InterestManager() {
     const handleAddChannel = async (channel: Channel) => {
         setAddingChannelId(channel.id);
         try {
-            await addChannelAction(channel);
+            await addChannelAction(channel, targetCategoryId);
+            const categoryObj = interests?.categories.find(c => c.id === targetCategoryId);
+            const targetName = categoryObj ? categoryObj.name : 'channels';
             setChannelResults([]);
             setChannelQuery('');
-            showToast(`Added "${channel.title}" to channels`, 'success');
+            showToast(`Added "${channel.title}" to ${targetName}`, 'success');
             await refreshData();
         } catch (error) {
             showToast('Failed to add channel', 'error');
@@ -333,6 +545,17 @@ export default function InterestManager() {
             await refreshData();
         } catch (error) {
             showToast('Failed to remove channel', 'error');
+        }
+    };
+
+    const handleMoveChannel = async (channelId: string, targetCatId: string, targetCatName: string) => {
+        try {
+            await moveChannelCategoryAction(channelId, targetCatId);
+            const channel = interests?.channels.find(c => c.id === channelId);
+            showToast(`Moved "${channel?.title || 'Channel'}" to ${targetCatName}`, 'info');
+            await refreshData();
+        } catch (error) {
+            showToast('Failed to move channel', 'error');
         }
     };
 
@@ -390,13 +613,23 @@ export default function InterestManager() {
 
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
-        const channel = interests?.channels.find(c => c.id === active.id);
-        if (channel) setActiveDragChannel(channel);
+        const activeType = active.data.current?.type;
+        if (activeType === 'CATEGORY') {
+            const cat = interests?.categories.find(c => c.id === active.id);
+            if (cat) setActiveDragCategory(cat);
+        } else {
+            const channel = interests?.channels.find(c => c.id === active.id);
+            if (channel) setActiveDragChannel(channel);
+        }
     };
 
     const handleDragOver = (event: DragOverEvent) => {
         const { active, over } = event;
         if (!over || !interests) return;
+
+        if (active.data.current?.type === 'CATEGORY') {
+            return;
+        }
 
         const findContainer = (id: string) => {
             if (interests.categories.find(c => c.id === id)) return id;
@@ -432,6 +665,32 @@ export default function InterestManager() {
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveDragChannel(null);
+        setActiveDragCategory(null);
+
+        if (!over || !interests) return;
+
+        if (active.data.current?.type === 'CATEGORY') {
+            if (active.id === over.id) return;
+
+            const oldIndex = interests.categories.findIndex(c => c.id === active.id);
+            let newIndex = interests.categories.findIndex(c => c.id === over.id);
+
+            if (newIndex === -1) {
+                const parentCat = interests.categories.find(c => c.channelIds.includes(over.id as string));
+                if (parentCat) {
+                    newIndex = interests.categories.findIndex(c => c.id === parentCat.id);
+                }
+            }
+
+            if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+                const newCategories = arrayMove(interests.categories, oldIndex, newIndex);
+                setInterests({ ...interests, categories: newCategories });
+                await updateCategoriesStateAction(newCategories);
+                const catName = interests.categories[oldIndex]?.name || 'Category';
+                showToast(`Reordered "${catName}"`, 'info');
+            }
+            return;
+        }
 
         if (!over || !interests) return;
 
@@ -558,28 +817,45 @@ export default function InterestManager() {
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
-                <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-800">
-                    {interests.categories.map((category) => (
-                        <CategoryList
-                            key={category.id}
-                            category={category}
-                            allChannelsMap={allChannelsMap}
-                            currentChannelId={currentChannelId}
-                            currentCategoryId={currentCategoryId}
-                            editingCategoryId={editingCategoryId}
-                            editCategoryName={editCategoryName}
-                            setEditCategoryName={setEditCategoryName}
-                            handleRemoveChannel={handleRemoveChannel}
-                            saveCategoryRename={saveCategoryRename}
-                            startEditingCategory={startEditingCategory}
-                            handleDeleteCategory={handleDeleteCategory}
-                        />
-                    ))}
-                </div>
+                <SortableContext
+                    items={interests.categories.map(c => c.id)}
+                    strategy={verticalListSortingStrategy}
+                >
+                    <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-800">
+                        {interests.categories.map((category, index) => (
+                            <CategoryList
+                                key={category.id}
+                                category={category}
+                                categoryIndex={index}
+                                totalCategories={interests.categories.length}
+                                allChannelsMap={allChannelsMap}
+                                currentChannelId={currentChannelId}
+                                currentCategoryId={currentCategoryId}
+                                editingCategoryId={editingCategoryId}
+                                editCategoryName={editCategoryName}
+                                setEditCategoryName={setEditCategoryName}
+                                handleRemoveChannel={handleRemoveChannel}
+                                saveCategoryRename={saveCategoryRename}
+                                startEditingCategory={startEditingCategory}
+                                handleDeleteCategory={handleDeleteCategory}
+                                categories={interests.categories}
+                                handleMoveChannel={handleMoveChannel}
+                                onMoveCategoryToTop={handleMoveCategoryToTop}
+                                onMoveCategoryUp={handleMoveCategoryUp}
+                                onMoveCategoryDown={handleMoveCategoryDown}
+                            />
+                        ))}
+                    </div>
+                </SortableContext>
 
                 {/* Drag Overlay */}
                 <DragOverlay>
-                    {activeDragChannel ? (
+                    {activeDragCategory ? (
+                        <div className="bg-white dark:bg-neutral-900 border border-emerald-500/50 p-2.5 rounded-xl shadow-2xl text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                            <Folder size={14} className="text-emerald-500" />
+                            <span>{activeDragCategory.name}</span>
+                        </div>
+                    ) : activeDragChannel ? (
                         <div className="opacity-95">
                             <SortableChannelItem channel={activeDragChannel} isActive={false} onRemove={() => { }} isOverlay />
                         </div>
@@ -611,12 +887,26 @@ export default function InterestManager() {
 
                 {/* Floating Search Results Panel */}
                 {channelResults.length > 0 && (
-                    <div className="absolute bottom-12 left-0 right-0 z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-2 shadow-2xl max-h-[280px] overflow-y-auto backdrop-blur-xl animate-in slide-in-from-bottom-2 duration-200">
-                        <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-neutral-100 dark:border-neutral-800">
+                    <div className="absolute bottom-12 left-0 right-0 z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-2.5 shadow-2xl max-h-[300px] overflow-y-auto backdrop-blur-xl animate-in slide-in-from-bottom-2 duration-200">
+                        <div className="flex items-center justify-between px-1 py-1 mb-2 border-b border-neutral-100 dark:border-neutral-800 gap-2">
                             <span className="text-[11px] font-semibold text-neutral-400">Search Results</span>
-                            <button onClick={() => setChannelResults([])} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white">
-                                <X size={13} />
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-neutral-400 font-medium">Add to:</span>
+                                <select
+                                    value={targetCategoryId}
+                                    onChange={(e) => setTargetCategoryId(e.target.value)}
+                                    className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[11px] px-2 py-0.5 rounded-lg border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium cursor-pointer"
+                                >
+                                    {interests.categories.map(cat => (
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button onClick={() => setChannelResults([])} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white p-0.5 ml-1">
+                                    <X size={13} />
+                                </button>
+                            </div>
                         </div>
                         {channelResults.map(c => (
                             <button

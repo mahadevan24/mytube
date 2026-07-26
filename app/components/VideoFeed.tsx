@@ -47,12 +47,8 @@ export default function VideoFeed({ initialVideos, title, fetchMore, initialPage
             const existingIds = new Set(videos.map(v => v.id));
             const newVideos = result.videos.filter(v => !existingIds.has(v.id));
             
-            // Sort all videos by publishedAt descending (newest first)
-            const allVideos = [...videos, ...newVideos].sort((a, b) => {
-                return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
-            });
-
-            setVideos(allVideos);
+            // Append new videos maintaining pre-ordered round-robin structure
+            setVideos(prev => [...prev, ...newVideos]);
             setNextPageToken(result.nextPageToken);
             setHasMore(result.hasMore);
         } catch (err) {

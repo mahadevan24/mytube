@@ -180,15 +180,35 @@ export async function getPersonalizedFeed(
 
     const channelResults = await Promise.all(channelPromises);
 
-    const allVideos = channelResults.flatMap((r) => r.videos);
+    // Interleave videos round-by-round across channels:
+    // Round 0: 1st (latest) video from each channel, sorted among themselves by publishedAt desc
+    // Round 1: 2nd latest video from each channel, sorted among themselves by publishedAt desc
+    // etc.
+    const channelVideoLists = channelResults.map((r) => r.videos);
+    const maxLen = Math.max(0, ...channelVideoLists.map((list) => list.length));
 
-    // Remove duplicates (by video ID)
-    const uniqueVideos = Array.from(new Map(allVideos.map((v) => [v.id, v])).values());
+    const interleavedVideos: Video[] = [];
+    for (let i = 0; i < maxLen; i++) {
+        const roundVideos: Video[] = [];
+        for (const list of channelVideoLists) {
+            if (i < list.length) {
+                roundVideos.push(list[i]);
+            }
+        }
+        // Sort videos within this round by publishedAt descending (newest first)
+        roundVideos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+        interleavedVideos.push(...roundVideos);
+    }
 
-    // Sort by publishedAt descending (newest first)
-    const sortedVideos = uniqueVideos.sort((a, b) => {
-        return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
-    });
+    // Remove duplicates (by video ID), preserving round-robin order
+    const seenIds = new Set<string>();
+    const sortedVideos: Video[] = [];
+    for (const v of interleavedVideos) {
+        if (!seenIds.has(v.id)) {
+            seenIds.add(v.id);
+            sortedVideos.push(v);
+        }
+    }
 
     // Build channel tokens map
     const newChannelTokens: Record<string, string | undefined> = {};

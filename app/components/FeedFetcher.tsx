@@ -11,12 +11,20 @@ interface FeedFetcherProps {
 
 export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
     const channelIdFilter = searchParams.channelId as string | undefined;
-    const categoryIdFilter = searchParams.categoryId as string | undefined;
+    let categoryIdFilter = searchParams.categoryId as string | undefined;
 
     // Fetch initial interests from server-side storage
     const interests: UserInterests = await getStoredInterests();
 
     const hasInterests = interests.channels.length > 0;
+
+    // Find focus category if available (case-insensitive name check "focus")
+    const focusCategory = interests.categories?.find(c => c.name.trim().toLowerCase() === 'focus');
+
+    // Default to focus category when loading application (no explicit categoryId or channelId filter)
+    if (!channelIdFilter && !categoryIdFilter && focusCategory) {
+        categoryIdFilter = focusCategory.id;
+    }
 
     let initialVideos: Video[] = [];
     let feedTitle = "Your Personalized Feed";
@@ -46,7 +54,7 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
                 initialPageToken = result.nextPageToken;
                 feedTitle = "Channel Videos";
             }
-        } else if (categoryIdFilter) {
+        } else if (categoryIdFilter && categoryIdFilter !== 'all') {
             // Filter by Category
             const category = interests.categories?.find(c => c.id === categoryIdFilter);
             if (category) {

@@ -17,13 +17,18 @@ export async function getInterestsAction() {
     return await db.getStoredInterests();
 }
 
-export async function addChannelAction(channel: Channel) {
-    await db.addChannel(channel);
+export async function addChannelAction(channel: Channel, categoryId?: string) {
+    await db.addChannel(channel, categoryId);
     revalidatePath('/');
 }
 
 export async function removeChannelAction(id: string) {
     await db.removeChannel(id);
+    revalidatePath('/');
+}
+
+export async function moveChannelCategoryAction(channelId: string, targetCategoryId: string) {
+    await db.moveChannelToCategory(channelId, targetCategoryId);
     revalidatePath('/');
 }
 

@@ -181,3 +181,26 @@ export const updateCategoriesState = async (newCategories: Category[]) => {
     interests.categories = newCategories;
     await writeData(interests);
 };
+
+export const moveChannelToCategory = async (channelId: string, targetCategoryId: string) => {
+    const interests = await readData();
+    if (!interests.categories) interests.categories = [];
+
+    let targetCat = interests.categories.find(c => c.id === targetCategoryId);
+    if (!targetCat && targetCategoryId === UNCATEGORIZED_ID) {
+        targetCat = { id: UNCATEGORIZED_ID, name: 'Channels', channelIds: [] };
+        interests.categories.unshift(targetCat);
+    }
+    if (!targetCat) return;
+
+    interests.categories.forEach(cat => {
+        cat.channelIds = cat.channelIds.filter(id => id !== channelId);
+    });
+
+    if (!targetCat.channelIds.includes(channelId)) {
+        targetCat.channelIds.push(channelId);
+    }
+
+    await writeData(interests);
+};
+

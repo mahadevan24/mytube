@@ -13,7 +13,14 @@ export default function CategoryTabs({ categories }: CategoryTabsProps) {
     const searchParams = useSearchParams();
     const currentCategoryId = searchParams.get('categoryId');
     const currentChannelId = searchParams.get('channelId');
-    const isAll = !currentCategoryId && !currentChannelId;
+
+    const focusCategory = categories.find(c => c.name.trim().toLowerCase() === 'focus');
+
+    const activeCategoryId = currentCategoryId
+        ? (currentCategoryId === 'all' ? null : currentCategoryId)
+        : (!currentChannelId && focusCategory ? focusCategory.id : null);
+
+    const isAll = currentCategoryId === 'all' || (!currentCategoryId && !currentChannelId && !focusCategory);
 
     // Custom categories created by user
     const customCategories = categories.filter(c => c.id !== 'uncategorized');
@@ -21,7 +28,7 @@ export default function CategoryTabs({ categories }: CategoryTabsProps) {
     return (
         <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none border-b border-neutral-200 dark:border-white/5">
             <Link
-                href="/"
+                href="/?categoryId=all"
                 className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                     isAll
                         ? 'bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white shadow-md shadow-green-500/20 scale-105'
@@ -33,7 +40,7 @@ export default function CategoryTabs({ categories }: CategoryTabsProps) {
             </Link>
 
             {customCategories.map((category) => {
-                const isActive = currentCategoryId === category.id;
+                const isActive = activeCategoryId === category.id;
                 return (
                     <Link
                         key={category.id}
