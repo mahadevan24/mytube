@@ -7,8 +7,9 @@ import VideoFeed from './VideoFeed';
 interface InfiniteVideoFeedProps {
     initialVideos: Video[];
     title: string;
-    feedType: 'home' | 'channel';
+    feedType: 'home' | 'channel' | 'category';
     channelId?: string;
+    categoryId?: string;
     initialPageToken?: string;
     initialChannelTokens?: Record<string, string | undefined>;
 }
@@ -18,6 +19,7 @@ export default function InfiniteVideoFeed({
     title,
     feedType,
     channelId,
+    categoryId,
     initialPageToken,
     initialChannelTokens,
 }: InfiniteVideoFeedProps) {
@@ -48,12 +50,16 @@ export default function InfiniteVideoFeed({
             }
             return await response.json();
         } else {
-            // Home feed
+            // Home or Category feed
             const params = new URLSearchParams({
                 maxResults: '20',
             });
+
+            if (feedType === 'category' && categoryId) {
+                params.set('categoryId', categoryId);
+            }
             
-            // For home feed, use current channelTokens or parse from pageToken
+            // For home/category feed, use current channelTokens or parse from pageToken
             let tokensToUse = channelTokens;
             if (pageToken) {
                 // pageToken for home feed is actually the channelTokens JSON

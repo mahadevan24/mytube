@@ -5,8 +5,8 @@ import { getStoredInterests } from '../../../lib/storage';
 export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
-        const pageToken = searchParams.get('pageToken') || undefined;
         const maxResults = parseInt(searchParams.get('maxResults') || '20', 10);
+        const categoryId = searchParams.get('categoryId');
 
         // Parse channel tokens from query params if provided
         const channelTokensParam = searchParams.get('channelTokens');
@@ -20,8 +20,16 @@ export async function GET(request: NextRequest) {
         }
 
         const interests = await getStoredInterests();
+        let targetChannels = interests.channels;
+
+        if (categoryId) {
+            const category = interests.categories.find(c => c.id === categoryId);
+            if (category) {
+                targetChannels = interests.channels.filter(c => category.channelIds.includes(c.id));
+            }
+        }
         
-        if (interests.channels.length === 0) {
+        if (targetChannels.length === 0) {
             return NextResponse.json({
                 videos: [],
                 channelTokens: {},
@@ -30,7 +38,7 @@ export async function GET(request: NextRequest) {
         }
 
         const result = await getPersonalizedFeed(
-            interests.channels,
+            targetChannels,
             maxResults,
             channelTokens
         );

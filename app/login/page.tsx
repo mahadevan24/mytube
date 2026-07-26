@@ -29,6 +29,13 @@ export default function LoginPage() {
         }
     }
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.currentTarget.form?.requestSubmit();
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white dark:bg-black text-neutral-900 dark:text-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -59,7 +66,9 @@ export default function LoginPage() {
                                     name="username"
                                     type="text"
                                     autoComplete="username"
+                                    autoFocus
                                     required
+                                    onKeyDown={handleKeyDown}
                                     className="appearance-none block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-md shadow-sm placeholder-neutral-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white"
                                 />
                             </div>
@@ -76,6 +85,7 @@ export default function LoginPage() {
                                     type="password"
                                     autoComplete="current-password"
                                     required
+                                    onKeyDown={handleKeyDown}
                                     className="appearance-none block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-md shadow-sm placeholder-neutral-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white"
                                 />
                             </div>

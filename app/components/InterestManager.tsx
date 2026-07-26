@@ -14,7 +14,8 @@ import {
     searchChannelsAction
 } from '../actions';
 import { Channel, UserInterests, Category } from '../lib/types';
-import { Home, Search, Plus, X, Tv, Trash2, GripVertical, FolderPlus, Edit2, Check } from 'lucide-react';
+import { Search, Plus, X, Tv, Trash2, GripVertical, FolderPlus, Edit2, Check, Loader2, Folder } from 'lucide-react';
+import { useToast } from './Toast';
 import {
     DndContext,
     closestCenter,
@@ -38,7 +39,18 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 // --- Sortable Channel Item Component ---
-function SortableChannelItem({ channel, isActive, onRemove, isOverlay }: { channel: Channel, isActive: boolean, onRemove: (e: React.MouseEvent) => void, isOverlay?: boolean }) {
+function SortableChannelItem({ 
+    channel, 
+    isActive, 
+    onRemove, 
+    isOverlay 
+}: { 
+    channel: Channel; 
+    isActive: boolean; 
+    onRemove: (e: React.MouseEvent) => void; 
+    isOverlay?: boolean;
+}) {
+    const [imgError, setImgError] = useState(false);
     const {
         attributes,
         listeners,
@@ -55,33 +67,45 @@ function SortableChannelItem({ channel, isActive, onRemove, isOverlay }: { chann
     };
 
     return (
-        <li ref={setNodeRef} style={style} className={`text-sm group rounded-lg overflow-hidden transition-all ${isOverlay ? 'shadow-2xl scale-105 z-50 bg-neutral-900 border border-green-500/30' : ''}`}>
+        <li ref={setNodeRef} style={style} className={`text-sm group overflow-hidden transition-all duration-200 ${isOverlay ? 'shadow-2xl scale-105 z-50 bg-neutral-900 border border-emerald-500/40 rounded-xl' : ''}`}>
             <Link
                 href={`/?channelId=${channel.id}`}
-                className={`flex items-center justify-between px-3 py-2 w-full rounded-lg transition-all ${isActive
-                    ? 'bg-gradient-to-r from-green-500/10 via-yellow-500/8 to-lime-500/8 text-green-600 border border-green-300/30 dark:from-green-500/15 dark:via-yellow-500/12 dark:to-lime-500/12 dark:text-green-300 dark:border-green-500/25 shadow-sm'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-gradient-to-r hover:from-green-500/5 hover:via-yellow-500/3 hover:to-lime-500/5 dark:hover:from-green-500/5 dark:hover:via-yellow-500/3 dark:hover:to-lime-500/5 hover:text-neutral-900 dark:hover:text-white'
+                className={`flex items-center justify-between px-2.5 py-1.5 w-full transition-all duration-200 ${isActive
+                    ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold border-l-2 border-emerald-500 rounded-r-xl rounded-l-sm shadow-sm'
+                    : 'text-neutral-700 dark:text-neutral-300 border-l-2 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white rounded-r-xl rounded-l-sm'
                     }`}
             >
-                <div className="flex items-center gap-3 overflow-hidden flex-1">
-                    <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 flex-shrink-0 touch-none">
+                <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
+                    <div 
+                        {...attributes} 
+                        {...listeners} 
+                        className="cursor-grab active:cursor-grabbing text-neutral-400 opacity-0 group-hover:opacity-100 hover:text-neutral-600 dark:hover:text-neutral-200 flex-shrink-0 transition-opacity duration-200 touch-none"
+                        title="Drag to move"
+                    >
                         <GripVertical size={14} />
                     </div>
-                    {channel.thumbnail ? (
-                        <img src={channel.thumbnail} alt="" className="w-6 h-6 rounded-full ring-1 ring-white/10 flex-shrink-0" />
+                    {channel.thumbnail && !imgError ? (
+                        <img 
+                            src={channel.thumbnail} 
+                            alt={channel.title} 
+                            referrerPolicy="no-referrer"
+                            onError={() => setImgError(true)}
+                            className={`w-6 h-6 rounded-full flex-shrink-0 object-cover ring-1 transition-all ${isActive ? 'ring-2 ring-emerald-500' : 'ring-black/10 dark:ring-white/10 group-hover:ring-emerald-500/40'}`} 
+                        />
                     ) : (
-                        <div className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-neutral-500 flex-shrink-0">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isActive ? 'bg-emerald-500/20 text-emerald-500' : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-500'}`}>
                             <Tv size={12} />
                         </div>
                     )}
-                    <span className="truncate">{channel.title}</span>
+                    <span className="truncate text-xs font-medium tracking-tight">{channel.title}</span>
                 </div>
                 <button
                     onClick={onRemove}
-                    className="text-neutral-400 hover:text-red-500 dark:text-neutral-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1 hover:bg-neutral-200 dark:hover:bg-white/5 rounded flex-shrink-0 ml-2"
+                    className="text-neutral-400 hover:text-rose-500 dark:text-neutral-500 dark:hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all duration-150 p-1 hover:bg-rose-500/10 rounded-md flex-shrink-0 ml-1.5"
                     aria-label="Remove channel"
+                    title="Remove channel"
                 >
-                    <X size={14} />
+                    <X size={13} />
                 </button>
             </Link>
         </li>
@@ -93,6 +117,7 @@ function CategoryList({
     category,
     allChannelsMap,
     currentChannelId,
+    currentCategoryId,
     editingCategoryId,
     editCategoryName,
     setEditCategoryName,
@@ -101,52 +126,96 @@ function CategoryList({
     startEditingCategory,
     handleDeleteCategory
 }: {
-    category: Category,
-    allChannelsMap: Map<string, Channel>,
-    currentChannelId: string | null,
-    editingCategoryId: string | null,
-    editCategoryName: string,
-    setEditCategoryName: (s: string) => void,
-    handleRemoveChannel: (e: React.MouseEvent, id: string) => void,
-    saveCategoryRename: (id: string) => void,
-    startEditingCategory: (id: string, name: string) => void,
-    handleDeleteCategory: (e: React.MouseEvent, id: string) => void
+    category: Category;
+    allChannelsMap: Map<string, Channel>;
+    currentChannelId: string | null;
+    currentCategoryId: string | null;
+    editingCategoryId: string | null;
+    editCategoryName: string;
+    setEditCategoryName: (s: string) => void;
+    handleRemoveChannel: (e: React.MouseEvent, id: string, title: string) => void;
+    saveCategoryRename: (id: string) => void;
+    startEditingCategory: (id: string, name: string) => void;
+    handleDeleteCategory: (e: React.MouseEvent, id: string, name: string) => void;
 }) {
     const { setNodeRef, isOver } = useDroppable({
         id: category.id,
         data: { type: 'CATEGORY', category }
     });
 
+    const isCategoryActive = currentCategoryId === category.id;
+    const channelCount = category.channelIds.length;
+
+    // Do not render empty uncategorized container to prevent huge top gaps
+    if (category.id === 'uncategorized' && channelCount === 0) {
+        return null;
+    }
+
     return (
         <div className="flex flex-col gap-1">
             {/* Category Header */}
             {category.id !== 'uncategorized' && (
-                <div className="group flex items-center justify-between pl-6 py-1 text-neutral-400 hover:text-green-400/70 transition-colors">
+                <div className="group flex items-center justify-between px-1 py-1 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
                     {editingCategoryId === category.id ? (
-                        <div className="flex items-center gap-2 flex-1">
+                        <div className="flex items-center gap-1.5 flex-1">
                             <input
                                 autoFocus
                                 type="text"
-                                className="bg-gradient-to-r from-green-900/40 to-yellow-900/40 text-white text-xs px-1 rounded w-full border border-green-500/30 focus:border-green-400/60 focus:ring-1 focus:ring-green-400/30"
+                                className="bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white text-xs px-2.5 py-1 rounded-lg w-full border border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                                 value={editCategoryName}
                                 onChange={e => setEditCategoryName(e.target.value)}
                                 onBlur={() => saveCategoryRename(category.id)}
                                 onKeyDown={e => e.key === 'Enter' && saveCategoryRename(category.id)}
                             />
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide uppercase flex-1">
-                            <span className="text-neutral-600 dark:bg-gradient-to-r dark:from-green-300 dark:to-yellow-300 dark:bg-clip-text dark:text-transparent" onDoubleClick={() => startEditingCategory(category.id, category.name)}>{category.name}</span>
-                            <button onClick={() => startEditingCategory(category.id, category.name)} className="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity">
-                                <Edit2 size={10} />
+                            <button 
+                                onClick={() => saveCategoryRename(category.id)}
+                                className="text-emerald-500 p-1 hover:bg-emerald-500/10 rounded-lg flex-shrink-0"
+                            >
+                                <Check size={14} />
                             </button>
                         </div>
-                    )}
-
-                    {category.channelIds.length === 0 && (
-                        <button onClick={(e) => handleDeleteCategory(e, category.id)} className="opacity-0 group-hover:opacity-100 text-neutral-600 hover:text-red-500">
-                            <Trash2 size={12} />
-                        </button>
+                    ) : (
+                        <div className="flex items-center justify-between w-full">
+                            <Link
+                                href={`/?categoryId=${category.id}`}
+                                className={`flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase flex-1 rounded-lg px-1.5 py-1 transition-all ${isCategoryActive
+                                    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                                    : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                                    }`}
+                                onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    startEditingCategory(category.id, category.name);
+                                }}
+                            >
+                                <Folder size={13} className={isCategoryActive ? "text-emerald-500 fill-emerald-500/20" : "text-neutral-400"} />
+                                <span className="truncate">{category.name}</span>
+                                <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-neutral-200/70 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 group-hover:bg-emerald-500/15 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                    {channelCount}
+                                </span>
+                            </Link>
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        startEditingCategory(category.id, category.name);
+                                    }}
+                                    className="p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-colors"
+                                    title="Rename category"
+                                >
+                                    <Edit2 size={11} />
+                                </button>
+                                {channelCount === 0 && (
+                                    <button
+                                        onClick={(e) => handleDeleteCategory(e, category.id, category.name)}
+                                        className="p-1 text-neutral-400 hover:text-rose-500 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-colors"
+                                        title="Delete category"
+                                    >
+                                        <Trash2 size={11} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     )}
                 </div>
             )}
@@ -159,8 +228,8 @@ function CategoryList({
             >
                 <ul
                     ref={setNodeRef}
-                    className={`space-y-0.5 min-h-[10px] rounded-lg p-1 transition-all border ${isOver
-                        ? 'bg-gradient-to-br from-green-500/10 via-yellow-500/8 to-lime-500/8 border-green-500/30 dark:from-green-500/15 dark:via-yellow-500/12 dark:to-lime-500/12 dark:border-green-500/25 shadow-sm'
+                    className={`space-y-1 rounded-xl p-0.5 transition-all duration-200 border ${isOver
+                        ? 'bg-emerald-500/10 border-emerald-500/40 shadow-inner'
                         : 'border-transparent'
                         }`}
                 >
@@ -172,7 +241,7 @@ function CategoryList({
                                 key={channel.id}
                                 channel={channel}
                                 isActive={currentChannelId === channel.id}
-                                onRemove={(e) => handleRemoveChannel(e, channel.id)}
+                                onRemove={(e) => handleRemoveChannel(e, channel.id, channel.title)}
                             />
                         );
                     })}
@@ -185,9 +254,10 @@ function CategoryList({
 export default function InterestManager() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { showToast } = useToast();
 
     const currentChannelId = searchParams.get('channelId');
-    const isHome = !currentChannelId;
+    const currentCategoryId = searchParams.get('categoryId');
 
     const [interests, setInterests] = useState<UserInterests | null>(null);
     const [channelQuery, setChannelQuery] = useState('');
@@ -212,7 +282,6 @@ export default function InterestManager() {
     );
 
     useEffect(() => {
-        // Fetch initial data
         getInterestsAction().then(setInterests);
     }, []);
 
@@ -233,6 +302,7 @@ export default function InterestManager() {
             setChannelResults(results);
         } catch (error) {
             console.error('Search failed', error);
+            showToast('Search failed. Please try again.', 'error');
         } finally {
             setIsSearching(false);
         }
@@ -242,20 +312,28 @@ export default function InterestManager() {
         setAddingChannelId(channel.id);
         try {
             await addChannelAction(channel);
-            // Optimistic update - clear search
             setChannelResults([]);
             setChannelQuery('');
-            refreshData();
+            showToast(`Added "${channel.title}" to channels`, 'success');
+            await refreshData();
+        } catch (error) {
+            showToast('Failed to add channel', 'error');
         } finally {
             setAddingChannelId(null);
         }
     };
 
-    const handleRemoveChannel = async (e: React.MouseEvent, id: string) => {
-        e.preventDefault(); e.stopPropagation();
-        await removeChannelAction(id);
-        if (currentChannelId === id) router.push('/');
-        refreshData();
+    const handleRemoveChannel = async (e: React.MouseEvent, id: string, title: string) => {
+        e.preventDefault(); 
+        e.stopPropagation();
+        try {
+            await removeChannelAction(id);
+            if (currentChannelId === id) router.push('/');
+            showToast(`Removed "${title}" from channels`, 'info');
+            await refreshData();
+        } catch (error) {
+            showToast('Failed to remove channel', 'error');
+        }
     };
 
     // --- Category Actions ---
@@ -263,18 +341,29 @@ export default function InterestManager() {
     const handleCreateCategory = async (e: React.FormEvent) => {
         e.preventDefault();
         if (newCategoryName.trim()) {
-            await addCategoryAction(newCategoryName);
-            setNewCategoryName('');
-            setIsAddingCategory(false);
-            refreshData();
+            const categoryName = newCategoryName.trim();
+            try {
+                await addCategoryAction(categoryName);
+                setNewCategoryName('');
+                setIsAddingCategory(false);
+                showToast(`Category "${categoryName}" created`, 'success');
+                await refreshData();
+            } catch (error) {
+                showToast('Failed to create category', 'error');
+            }
         }
     };
 
-    const handleDeleteCategory = async (e: React.MouseEvent, id: string) => {
+    const handleDeleteCategory = async (e: React.MouseEvent, id: string, name: string) => {
         e.preventDefault();
-        if (confirm("Delete this category? Channels will be moved to 'Channels'.")) {
-            await removeCategoryAction(id);
-            refreshData();
+        if (confirm(`Delete category "${name}"?`)) {
+            try {
+                await removeCategoryAction(id);
+                showToast(`Category "${name}" deleted`, 'info');
+                await refreshData();
+            } catch (error) {
+                showToast('Failed to delete category', 'error');
+            }
         }
     };
 
@@ -285,10 +374,16 @@ export default function InterestManager() {
 
     const saveCategoryRename = async (id: string) => {
         if (editCategoryName.trim()) {
-            await renameCategoryAction(id, editCategoryName);
+            const newName = editCategoryName.trim();
+            try {
+                await renameCategoryAction(id, newName);
+                showToast(`Category renamed to "${newName}"`, 'success');
+                await refreshData();
+            } catch (error) {
+                showToast('Failed to rename category', 'error');
+            }
         }
         setEditingCategoryId(null);
-        refreshData();
     };
 
     // --- Drag and Drop Logic ---
@@ -303,7 +398,6 @@ export default function InterestManager() {
         const { active, over } = event;
         if (!over || !interests) return;
 
-        // Visual only update
         const findContainer = (id: string) => {
             if (interests.categories.find(c => c.id === id)) return id;
             return interests.categories.find(cat => cat.channelIds.includes(id))?.id;
@@ -331,7 +425,6 @@ export default function InterestManager() {
                 }
                 return cat;
             });
-            // Optimistic sync
             setInterests({ ...interests, categories: newCategories });
         }
     };
@@ -365,7 +458,6 @@ export default function InterestManager() {
             const destCat = newCategories.find(c => c.id === overContainer);
             if (destCat) {
                 if (!destCat.channelIds.includes(active.id as string)) {
-                    // Added to container, check where
                     const overIsItem = interests.channels.find(c => c.id === over.id);
                     if (overIsItem) {
                         const atIndex = destCat.channelIds.indexOf(over.id as string);
@@ -375,11 +467,9 @@ export default function InterestManager() {
                             destCat.channelIds.push(active.id as string);
                         }
                     } else {
-                        // Dropped on container
                         destCat.channelIds.push(active.id as string);
                     }
                 } else {
-                    // Already in container, reordering
                     if (activeContainer === overContainer) {
                         const oldIndex = interests.categories.find(c => c.id === activeContainer)?.channelIds.indexOf(active.id as string) ?? -1;
                         const newIndex = destCat.channelIds.indexOf(over.id as string);
@@ -390,36 +480,77 @@ export default function InterestManager() {
                 }
             }
 
-            // Optimistic update
             setInterests({ ...interests, categories: newCategories });
-            // Server sync
             await updateCategoriesStateAction(newCategories);
+
+            // Trigger Toast on Container Change
+            if (activeContainer !== overContainer) {
+                const movedChannel = interests.channels.find(c => c.id === active.id);
+                const destCategoryName = interests.categories.find(c => c.id === overContainer)?.name || 'Category';
+                if (movedChannel) {
+                    showToast(`Moved "${movedChannel.title}" to ${destCategoryName}`, 'info');
+                }
+            }
         }
     };
 
-
-    if (!interests) return <div className="p-4 text-neutral-500 animate-pulse">Loading...</div>;
+    if (!interests) return (
+        <div className="flex items-center justify-center p-8 text-neutral-400 gap-2">
+            <Loader2 size={16} className="animate-spin text-emerald-500" />
+            <span className="text-xs">Loading subscriptions...</span>
+        </div>
+    );
 
     const allChannelsMap = new Map(interests.channels.map(c => [c.id, c]));
 
     return (
-        <div className="flex flex-col gap-6 h-full pr-6">
-            {/* Navigation */}
-            <div className="flex flex-col gap-2">
-                <Link
-                    href="/"
-                    className={`flex items-center gap-3 pl-6 pr-4 py-3 rounded-xl transition-all duration-200 group text-sm ${isHome
-                        ? 'bg-gradient-to-r from-green-500/10 via-yellow-500/8 to-lime-500/8 text-green-600 dark:from-green-500/15 dark:via-yellow-500/12 dark:to-lime-500/12 dark:text-green-300 border border-green-300/30 dark:border-green-500/25 shadow-sm'
-                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-gradient-to-r hover:from-green-500/5 hover:via-yellow-500/3 hover:to-lime-500/5 dark:hover:from-green-500/5 dark:hover:via-yellow-500/3 dark:hover:to-lime-500/5 hover:text-neutral-900 dark:hover:text-white'
-                        }`}
+        <div className="flex flex-col h-full px-3 py-2">
+            
+            {/* Add Category Button / Inline Form */}
+            {isAddingCategory ? (
+                <form onSubmit={handleCreateCategory} className="mb-2.5 p-1.5 bg-neutral-100 dark:bg-neutral-800/80 rounded-xl border border-emerald-500/40 shadow-sm animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center gap-2">
+                        <input
+                            autoFocus
+                            type="text"
+                            className="flex-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-2.5 py-1 text-xs text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                            placeholder="Category Name..."
+                            value={newCategoryName}
+                            onChange={e => setNewCategoryName(e.target.value)}
+                            onBlur={() => !newCategoryName && setIsAddingCategory(false)}
+                        />
+                        <button 
+                            type="submit" 
+                            disabled={!newCategoryName.trim()}
+                            className="p-1 text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors disabled:opacity-40"
+                        >
+                            <Check size={16} />
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={() => setIsAddingCategory(false)}
+                            className="p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 rounded-lg"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                </form>
+            ) : (
+                <button
+                    onClick={() => setIsAddingCategory(true)}
+                    className="w-full flex items-center justify-between px-3 py-2 mb-2 rounded-xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent hover:from-emerald-500/20 hover:via-teal-500/15 hover:to-emerald-500/10 border border-emerald-500/25 dark:border-emerald-500/35 text-emerald-700 dark:text-emerald-300 font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-emerald-500/10 group"
                 >
-                    <Home size={18} className={isHome ? "text-green-500 dark:text-green-400" : "group-hover:text-neutral-900 dark:group-hover:text-white transition-colors"} />
-                    <span className="font-medium">Home Feed</span>
-                </Link>
-                <div className="h-px bg-gradient-to-r from-transparent via-green-300/30 to-transparent dark:via-green-500/15 w-full my-2"></div>
-            </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-md bg-emerald-500 text-white flex items-center justify-center shadow-sm shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+                            <Plus size={13} strokeWidth={2.5} />
+                        </div>
+                        <span>Add Category</span>
+                    </div>
+                    <FolderPlus size={14} className="text-emerald-500/70 group-hover:text-emerald-500 transition-colors" />
+                </button>
+            )}
 
-            {/* Channels & Categories Section */}
+            {/* Drag & Drop Channel Categories List */}
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -427,40 +558,14 @@ export default function InterestManager() {
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
-                <div className="flex flex-col gap-4 overflow-y-auto pb-10 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent relative flex-1">
-                    <div className="flex items-center justify-between pl-6">
-                        <h3 className="text-xs font-bold text-neutral-600 dark:bg-gradient-to-r dark:from-green-300 dark:to-yellow-300 dark:bg-clip-text dark:text-transparent uppercase tracking-wider m-0">Channels</h3>
-                        <button
-                            onClick={() => setIsAddingCategory(true)}
-                            className="text-neutral-500 hover:text-green-500/70 transition-colors"
-                            title="New Category">
-                            <FolderPlus size={16} />
-                        </button>
-                    </div>
-
-                    {isAddingCategory && (
-                        <form onSubmit={handleCreateCategory} className="px-1 animate-in slide-in-from-top-2">
-                            <div className="flex gap-2">
-                                <input
-                                    autoFocus
-                                    type="text"
-                                    className="flex-1 bg-gradient-to-r from-green-900/40 to-yellow-900/40 border border-green-500/30 focus:border-green-400/60 focus:ring-1 focus:ring-green-400/30 rounded p-1 text-sm text-white placeholder-neutral-500"
-                                    placeholder="Category Name"
-                                    value={newCategoryName}
-                                    onChange={e => setNewCategoryName(e.target.value)}
-                                    onBlur={() => !newCategoryName && setIsAddingCategory(false)}
-                                />
-                                <button type="submit" className="text-green-400/80"><Check size={16} /></button>
-                            </div>
-                        </form>
-                    )}
-
+                <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-800">
                     {interests.categories.map((category) => (
                         <CategoryList
                             key={category.id}
                             category={category}
                             allChannelsMap={allChannelsMap}
                             currentChannelId={currentChannelId}
+                            currentCategoryId={currentCategoryId}
                             editingCategoryId={editingCategoryId}
                             editCategoryName={editCategoryName}
                             setEditCategoryName={setEditCategoryName}
@@ -475,54 +580,69 @@ export default function InterestManager() {
                 {/* Drag Overlay */}
                 <DragOverlay>
                     {activeDragChannel ? (
-                        <div className="opacity-90">
+                        <div className="opacity-95">
                             <SortableChannelItem channel={activeDragChannel} isActive={false} onRemove={() => { }} isOverlay />
                         </div>
                     ) : null}
                 </DragOverlay>
             </DndContext>
 
-            {/* Search Input for Channels */}
-            <form onSubmit={handleSearchChannels} className="relative group px-1 mb-2 mt-auto">
-                <input
-                    type="text"
-                    value={channelQuery}
-                    onChange={(e) => setChannelQuery(e.target.value)}
-                    placeholder="Search channels..."
-                    className="w-full bg-gradient-to-r from-white via-green-50/15 to-yellow-50/10 dark:from-neutral-900 dark:via-green-950/10 dark:to-yellow-950/5 border border-neutral-200 dark:border-neutral-800 rounded-lg pl-3 pr-8 py-2 text-sm text-neutral-900 dark:text-neutral-300 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-green-400/40 focus:ring-1 focus:ring-green-400/30 focus:bg-gradient-to-r focus:from-white focus:via-green-50/25 focus:to-yellow-50/15 dark:focus:from-neutral-900 dark:focus:via-green-950/15 dark:focus:to-yellow-950/10 transition-all"
-                />
-                <button
-                    type="submit"
-                    disabled={!channelQuery.trim() || isSearching}
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 transition-colors ${isSearching ? 'animate-pulse text-green-500/70' : 'text-neutral-500 hover:text-green-500/70'}`}
-                >
-                    <Search size={16} />
-                </button>
-            </form>
-            {channelResults.length > 0 && (
-                <div className="absolute bottom-16 left-4 right-4 z-50 bg-gradient-to-br from-neutral-900 via-green-950/30 to-yellow-950/30 border border-green-500/20 rounded-xl p-2 shadow-2xl max-h-[300px] overflow-y-auto backdrop-blur-sm">
-                    <div className="flex items-center justify-between px-2 py-1 mb-2">
-                        <p className="text-xs text-neutral-400">Select to add:</p>
-                        <button onClick={() => setChannelResults([])}><X size={14} className="text-neutral-500 hover:text-white" /></button>
-                    </div>
-                    {channelResults.map(c => (
+            {/* Bottom Search Bar & Search Results Dropdown */}
+            <div className="pt-2 mt-2 border-t border-neutral-200/60 dark:border-white/5 relative">
+                <form onSubmit={handleSearchChannels} className="relative">
+                    <input
+                        type="text"
+                        value={channelQuery}
+                        onChange={(e) => setChannelQuery(e.target.value)}
+                        placeholder="Search & add channels..."
+                        className="w-full bg-neutral-100/80 dark:bg-neutral-900/80 border border-neutral-200/80 dark:border-neutral-800 rounded-xl pl-8 pr-8 py-1.5 text-xs text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200"
+                    />
+                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+                    {channelQuery ? (
                         <button
-                            key={c.id}
-                            onClick={() => handleAddChannel(c)}
-                            disabled={addingChannelId === c.id}
-                            className={`flex items-center gap-3 w-full text-left hover:bg-gradient-to-r hover:from-green-500/10 hover:via-yellow-500/8 hover:to-lime-500/8 p-2 rounded-lg transition-all ${addingChannelId === c.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            type="button"
+                            onClick={() => { setChannelQuery(''); setChannelResults([]); }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 p-0.5"
                         >
-                            {c.thumbnail && <img src={c.thumbnail} className="w-8 h-8 rounded-full" />}
-                            <span className="text-sm text-neutral-200 truncate flex-1">{c.title}</span>
-                            {addingChannelId === c.id ? (
-                                <span className="text-xs text-green-400/80 font-medium animate-pulse">Adding...</span>
-                            ) : (
-                                <Plus size={14} className="text-green-400/80" />
-                            )}
+                            <X size={12} />
                         </button>
-                    ))}
-                </div>
-            )}
+                    ) : null}
+                </form>
+
+                {/* Floating Search Results Panel */}
+                {channelResults.length > 0 && (
+                    <div className="absolute bottom-12 left-0 right-0 z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-2 shadow-2xl max-h-[280px] overflow-y-auto backdrop-blur-xl animate-in slide-in-from-bottom-2 duration-200">
+                        <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-neutral-100 dark:border-neutral-800">
+                            <span className="text-[11px] font-semibold text-neutral-400">Search Results</span>
+                            <button onClick={() => setChannelResults([])} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white">
+                                <X size={13} />
+                            </button>
+                        </div>
+                        {channelResults.map(c => (
+                            <button
+                                key={c.id}
+                                onClick={() => handleAddChannel(c)}
+                                disabled={addingChannelId === c.id}
+                                className="flex items-center gap-2.5 w-full text-left hover:bg-neutral-100 dark:hover:bg-neutral-800/70 p-2 rounded-xl transition-all duration-150 group"
+                            >
+                                {c.thumbnail ? (
+                                    <img src={c.thumbnail} alt={c.title} referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-neutral-200 dark:ring-neutral-700" />
+                                ) : (
+                                    <div className="w-7 h-7 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
+                                        <Tv size={12} />
+                                    </div>
+                                )}
+                                <span className="text-xs text-neutral-800 dark:text-neutral-200 truncate flex-1 font-medium">{c.title}</span>
+                                {addingChannelId === c.id ? (
+                                    <Loader2 size={13} className="animate-spin text-emerald-500" />
+                                ) : (
+                                    <Plus size={14} className="text-emerald-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
