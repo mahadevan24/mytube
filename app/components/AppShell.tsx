@@ -13,7 +13,7 @@ interface AppShellProps {
 
 export default function AppShell({ sidebar, children, themeToggle, isEmpty }: AppShellProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
+    const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     // Resizable Sidebar State
