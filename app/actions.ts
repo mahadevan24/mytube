@@ -1,6 +1,6 @@
 'use server';
 
-import { searchChannels, extractYouTubeVideoId, getSingleVideoDetails } from './lib/youtube';
+import { searchChannels, extractYouTubeVideoId, getSingleVideoDetails, searchMusicVideos, getRecommendedMusicVideos } from './lib/youtube';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import * as db from './lib/storage';
@@ -164,6 +164,15 @@ export async function removeMusicVideoAction(videoId: string) {
         return { success: false, error: 'Failed to remove video' };
     }
 }
+
+export async function getMusicRecommendationsAction(query?: string) {
+    if (query && query.trim()) {
+        return await searchMusicVideos(query.trim(), 24);
+    }
+    const interests = await db.getStoredInterests();
+    return await getRecommendedMusicVideos(interests.channels, interests.musicList);
+}
+
 
 
 

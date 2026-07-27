@@ -114,11 +114,11 @@ export default function VideoFeed({ initialVideos, title, fetchMore, initialPage
                         <div ref={observerTarget} className="mt-8 flex justify-center">
                             {isLoading && <Loader />}
                             {error && (
-                                <div className="text-red-500 text-sm">
+                                <div className="text-neutral-700 dark:text-neutral-300 text-sm">
                                     {error}
                                     <button
                                         onClick={loadMore}
-                                        className="ml-2 text-indigo-600 dark:text-indigo-400 hover:underline"
+                                        className="ml-2 text-neutral-900 dark:text-white font-semibold underline"
                                     >
                                         Retry
                                     </button>

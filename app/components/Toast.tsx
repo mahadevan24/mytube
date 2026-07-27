@@ -25,23 +25,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         const id = Math.random().toString(36).substring(2, 9);
         
         // Pick custom icon based on keywords if needed, or by type
-        let icon: React.ReactNode = <Info size={16} className="text-blue-400" />;
+        let icon: React.ReactNode = <Info size={16} className="text-white" />;
         if (type === 'success') {
             if (message.toLowerCase().includes('category')) {
-                icon = <FolderPlus size={16} className="text-emerald-400" />;
+                icon = <FolderPlus size={16} className="text-white" />;
             } else if (message.toLowerCase().includes('channel') || message.toLowerCase().includes('added')) {
-                icon = <PlusCircle size={16} className="text-emerald-400" />;
+                icon = <PlusCircle size={16} className="text-white" />;
             } else {
-                icon = <CheckCircle2 size={16} className="text-emerald-400" />;
+                icon = <CheckCircle2 size={16} className="text-white" />;
             }
         } else if (type === 'info') {
             if (message.toLowerCase().includes('removed') || message.toLowerCase().includes('deleted')) {
-                icon = <Trash2 size={16} className="text-rose-400" />;
+                icon = <Trash2 size={16} className="text-white" />;
             } else {
-                icon = <Info size={16} className="text-indigo-400" />;
+                icon = <Info size={16} className="text-white" />;
             }
         } else if (type === 'error') {
-            icon = <AlertCircle size={16} className="text-rose-400" />;
+            icon = <AlertCircle size={16} className="text-white" />;
         }
 
         setToasts((prev) => [...prev.slice(-4), { id, message, type, icon }]);
@@ -65,10 +65,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                         key={toast.id}
                         className={`pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl shadow-xl backdrop-blur-md border transition-all duration-300 animate-in slide-in-from-bottom-5 fade-in ${
                             toast.type === 'success'
-                                ? 'bg-neutral-900/90 text-white border-emerald-500/30 shadow-emerald-950/20 dark:bg-neutral-900/95 dark:border-emerald-500/40'
+                                ? 'bg-neutral-900/90 text-white border-white/20 shadow-neutral-950/20 dark:bg-neutral-900/95 dark:border-white/20'
                                 : toast.type === 'error'
-                                ? 'bg-neutral-900/90 text-white border-rose-500/30 shadow-rose-950/20 dark:bg-neutral-900/95 dark:border-rose-500/40'
-                                : 'bg-neutral-900/90 text-white border-indigo-500/30 shadow-indigo-950/20 dark:bg-neutral-900/95 dark:border-neutral-800'
+                                ? 'bg-neutral-900/90 text-white border-white/20 shadow-neutral-950/20 dark:bg-neutral-900/95 dark:border-white/20'
+                                : 'bg-neutral-900/90 text-white border-white/20 shadow-neutral-950/20 dark:bg-neutral-900/95 dark:border-white/20'
                         }`}
                     >
                         <div className="flex items-center gap-3 flex-1 min-w-0">

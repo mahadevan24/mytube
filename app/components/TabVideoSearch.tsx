@@ -71,7 +71,7 @@ export default function TabVideoSearch({
             <form onSubmit={handleSearchSubmit} className="relative flex items-center w-full">
                 <div className="absolute left-3.5 flex items-center pointer-events-none text-neutral-400">
                     {isPending ? (
-                        <Loader2 size={16} className="animate-spin text-emerald-500" />
+                        <Loader2 size={16} className="animate-spin text-neutral-400" />
                     ) : (
                         <Search size={16} />
                     )}
@@ -82,7 +82,7 @@ export default function TabVideoSearch({
                     value={query}
                     onChange={handleInputChange}
                     placeholder={`Search in ${scopeName} (${channelCount} ${channelCount === 1 ? 'channel' : 'channels'})...`}
-                    className="w-full pl-10 pr-28 py-2 bg-neutral-100 dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800 rounded-full text-xs sm:text-sm font-medium text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white dark:focus:bg-black transition-all shadow-sm"
+                    className="w-full pl-10 pr-28 py-2 bg-neutral-100 dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800 rounded-full text-xs sm:text-sm font-medium text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600 focus:border-neutral-400 focus:bg-white dark:focus:bg-black transition-all shadow-sm"
                 />
 
                 <div className="absolute right-1.5 flex items-center gap-1">
@@ -100,7 +100,7 @@ export default function TabVideoSearch({
                     <button
                         type="submit"
                         disabled={isPending || !query.trim()}
-                        className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-40 text-white font-semibold text-xs rounded-full transition-all flex items-center justify-center active:scale-95 shadow-sm"
+                        className="px-3.5 py-1.5 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-40 text-white dark:text-neutral-900 font-semibold text-xs rounded-full transition-all flex items-center justify-center active:scale-95 shadow-sm"
                         title="Search YouTube"
                     >
                         <span>Search</span>
@@ -111,11 +111,11 @@ export default function TabVideoSearch({
             {activeUrlQuery && (
                 <div className="mt-2 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400 px-3">
                     <span>
-                        Results for <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">&quot;{activeUrlQuery}&quot;</strong> in {scopeName}
+                        Results for <strong className="text-neutral-900 dark:text-white font-semibold">&quot;{activeUrlQuery}&quot;</strong> in {scopeName}
                     </span>
                     <button
                         onClick={handleClear}
-                        className="text-xs text-rose-500 hover:underline font-medium"
+                        className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:underline font-medium"
                     >
                         Clear search
                     </button>

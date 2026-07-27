@@ -19,7 +19,6 @@ import {
     ArrowUpDown,
     CheckCircle2,
     Eye,
-    ListVideo,
     Sparkles,
     Check
 } from 'lucide-react';
@@ -124,65 +123,39 @@ export default function WatchlistManager({ initialWatchlist }: WatchlistManagerP
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Header Title & Description */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200 dark:border-white/10 pb-6">
-                <div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
-                            <ListVideo size={24} />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
-                                My Watchlist
-                            </h1>
-                            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                Paste any YouTube link to save videos you plan to start or finish watching.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <div className="space-y-4 animate-in fade-in duration-500">
+            {/* Top Bar: Title, Counters & Quick Add Input */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-neutral-200 dark:border-white/10 pb-4">
 
-                {/* Counter Badges */}
-                <div className="flex items-center gap-2 self-start md:self-auto">
-                    <span className="px-3 py-1 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 rounded-full text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                        {counts.all} Total
-                    </span>
-                    <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                        {counts.unwatched} Saved
-                    </span>
-                </div>
-            </div>
 
-            {/* Paste Link Input Form */}
-            <div className="bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/30 rounded-2xl p-4 md:p-6 shadow-sm">
-                <form onSubmit={handleAddVideo} className="flex flex-col sm:flex-row gap-3">
+                {/* Inline Compact Add Video Form */}
+                <form onSubmit={handleAddVideo} className="flex items-center gap-2 w-full md:w-auto md:max-w-md">
                     <div className="relative flex-1">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
-                            <Link2 size={18} />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-400">
+                            <Link2 size={15} />
                         </div>
                         <input
                             type="text"
                             value={inputUrl}
                             onChange={e => setInputUrl(e.target.value)}
-                            placeholder="Paste YouTube Video Link or ID (e.g., https://youtu.be/video_id)..."
-                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-neutral-950 border border-neutral-300 dark:border-white/10 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm shadow-sm transition-all"
+                            placeholder="Paste YouTube Video Link or ID..."
+                            className="w-full pl-9 pr-3 py-1.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs transition-all"
                             disabled={isLoading}
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={isLoading || !inputUrl.trim()}
-                        className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-all shadow-md hover:shadow-emerald-500/25 flex items-center justify-center gap-2 whitespace-nowrap"
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap"
                     >
                         {isLoading ? (
                             <>
-                                <Loader2 size={18} className="animate-spin" />
+                                <Loader2 size={14} className="animate-spin" />
                                 <span>Fetching...</span>
                             </>
                         ) : (
                             <>
-                                <Plus size={18} />
+                                <Plus size={14} />
                                 <span>Add Video</span>
                             </>
                         )}
@@ -191,35 +164,35 @@ export default function WatchlistManager({ initialWatchlist }: WatchlistManagerP
             </div>
 
             {/* Toolbar: Filter Tabs & Search / Sort */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 pb-2">
                 {/* Filter Tabs */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
                     <button
                         onClick={() => setFilterStatus('all')}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filterStatus === 'all' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filterStatus === 'all' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
                     >
                         All ({counts.all})
                     </button>
                     <button
                         onClick={() => setFilterStatus('unwatched')}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filterStatus === 'unwatched' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filterStatus === 'unwatched' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
                     >
-                        <Bookmark size={14} />
+                        <Bookmark size={13} />
                         Saved ({counts.unwatched})
                     </button>
 
                     <button
                         onClick={() => setFilterStatus('watching')}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filterStatus === 'watching' ? 'bg-amber-600 text-white shadow-md' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filterStatus === 'watching' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
                     >
-                        <Eye size={14} />
+                        <Eye size={13} />
                         Watching ({counts.watching})
                     </button>
                     <button
                         onClick={() => setFilterStatus('completed')}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filterStatus === 'completed' ? 'bg-emerald-600 text-white shadow-md' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filterStatus === 'completed' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
                     >
-                        <CheckCircle2 size={14} />
+                        <CheckCircle2 size={13} />
                         Completed ({counts.completed})
                     </button>
                 </div>
@@ -269,7 +242,7 @@ export default function WatchlistManager({ initialWatchlist }: WatchlistManagerP
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-16 px-4 bg-neutral-50 dark:bg-neutral-900/40 border border-dashed border-neutral-300 dark:border-white/10 rounded-2xl text-center space-y-4">
-                    <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                    <div className="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
                         <Bookmark size={32} />
                     </div>
                     <div className="max-w-md space-y-1">

@@ -2,7 +2,7 @@ import Loader from './components/Loader';
 
 export default function Loading() {
     return (
-        <div className="flex h-screen bg-white dark:bg-black text-neutral-900 dark:text-neutral-100 font-sans overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200">
+        <div className="flex h-screen bg-white dark:bg-black text-neutral-900 dark:text-neutral-100 font-sans overflow-hidden selection:bg-neutral-800 selection:text-white">
 
             {/* Mobile Header Skeleton */}
             <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-neutral-200 dark:border-white/5 z-50 flex items-center justify-between px-4">

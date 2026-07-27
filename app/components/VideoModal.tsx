@@ -178,15 +178,15 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
                     {/* Timestamp Resume & Loop Badges */}
                     <div className="flex items-center gap-2">
                         {loop && (
-                            <div className="pointer-events-auto flex items-center gap-1.5 bg-indigo-600/90 backdrop-blur-md border border-indigo-400/30 px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-lg animate-in slide-in-from-top-2">
+                            <div className="pointer-events-auto flex items-center gap-1.5 bg-black/90 dark:bg-white/90 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full text-xs font-semibold text-white dark:text-black shadow-lg animate-in slide-in-from-top-2">
                                 <Repeat size={14} className="animate-spin-slow" />
                                 <span>Repeat Mode Active</span>
                             </div>
                         )}
                         {!isPlayingFromStart && savedStartSeconds > 0 ? (
                             <div className="pointer-events-auto flex items-center gap-2 bg-black/70 backdrop-blur-md border border-white/15 px-3 py-1.5 rounded-full text-xs text-white shadow-lg animate-in slide-in-from-top-2">
-                                <span className="flex items-center gap-1.5 font-medium text-emerald-400">
-                                    <Play size={12} className="fill-emerald-400" />
+                                <span className="flex items-center gap-1.5 font-medium text-white">
+                                    <Play size={12} className="fill-white" />
                                     Resuming at {formatSecondsToTimestamp(savedStartSeconds)}
                                 </span>
                                 <button

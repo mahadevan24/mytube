@@ -89,9 +89,9 @@ function SortableChannelItem({
     };
 
     return (
-        <li ref={setNodeRef} style={style} className={`text-sm group relative transition-all duration-200 ${isOverlay ? 'shadow-2xl scale-105 z-50 bg-neutral-900 border border-emerald-500/40 rounded-xl' : ''}`}>
+        <li ref={setNodeRef} style={style} className={`text-sm group relative transition-all duration-200 ${isOverlay ? 'shadow-2xl scale-105 z-50 bg-neutral-900 border border-white/40 rounded-xl' : ''}`}>
             <div className={`flex items-center justify-between px-2.5 py-1.5 w-full transition-all duration-200 ${isActive
-                ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold border-l-2 border-emerald-500 rounded-r-xl rounded-l-sm shadow-sm'
+                ? 'bg-neutral-200 dark:bg-white/10 text-neutral-900 dark:text-white font-semibold border-l-2 border-neutral-900 dark:border-white rounded-r-xl rounded-l-sm shadow-sm'
                 : 'text-neutral-700 dark:text-neutral-300 border-l-2 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white rounded-r-xl rounded-l-sm'
                 }`}
             >
@@ -114,10 +114,10 @@ function SortableChannelItem({
                             alt={channel.title} 
                             referrerPolicy="no-referrer"
                             onError={() => setImgError(true)}
-                            className={`w-6 h-6 rounded-full flex-shrink-0 object-cover ring-1 transition-all ${isActive ? 'ring-2 ring-emerald-500' : 'ring-black/10 dark:ring-white/10 group-hover:ring-emerald-500/40'}`} 
+                            className={`w-6 h-6 rounded-full flex-shrink-0 object-cover ring-1 transition-all ${isActive ? 'ring-2 ring-neutral-900 dark:ring-white' : 'ring-black/10 dark:ring-white/10 group-hover:ring-neutral-400 dark:group-hover:ring-neutral-600'}`} 
                         />
                     ) : (
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isActive ? 'bg-emerald-500/20 text-emerald-500' : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-500'}`}>
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isActive ? 'bg-neutral-300 dark:bg-neutral-700 text-neutral-900 dark:text-white' : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-500'}`}>
                             <Tv size={12} />
                         </div>
                     )}
@@ -133,7 +133,7 @@ function SortableChannelItem({
                                     e.stopPropagation();
                                     setIsMoveOpen(!isMoveOpen);
                                 }}
-                                className="text-neutral-400 hover:text-emerald-600 dark:text-neutral-500 dark:hover:text-emerald-400 p-1 hover:bg-emerald-500/10 rounded-md transition-all duration-150"
+                                className="text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-white p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-all duration-150"
                                 title="Move to category"
                             >
                                 <FolderInput size={13} />
@@ -159,15 +159,15 @@ function SortableChannelItem({
                                                         }
                                                     }}
                                                     className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-left transition-colors ${isCurrentCat
-                                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
+                                                        ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-semibold'
                                                         : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                                                     }`}
                                                 >
                                                     <div className="flex items-center gap-2 truncate">
-                                                        <Folder size={12} className={isCurrentCat ? 'text-emerald-500' : 'text-neutral-400'} />
+                                                        <Folder size={12} className={isCurrentCat ? 'text-neutral-900 dark:text-white' : 'text-neutral-400'} />
                                                         <span className="truncate">{cat.name}</span>
                                                     </div>
-                                                    {isCurrentCat && <Check size={12} className="text-emerald-500 flex-shrink-0" />}
+                                                    {isCurrentCat && <Check size={12} className="text-neutral-900 dark:text-white flex-shrink-0" />}
                                                 </button>
                                             );
                                         })}
@@ -179,7 +179,7 @@ function SortableChannelItem({
 
                     <button
                         onClick={onRemove}
-                        className="text-neutral-400 hover:text-rose-500 dark:text-neutral-500 dark:hover:text-rose-400 p-1 hover:bg-rose-500/10 rounded-md transition-all duration-150"
+                        className="text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-white p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-all duration-150"
                         aria-label="Remove channel"
                         title="Remove channel"
                     >
@@ -270,7 +270,7 @@ function CategoryList({
                             <input
                                 autoFocus
                                 type="text"
-                                className="bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white text-xs px-2.5 py-1 rounded-lg w-full border border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                className="bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white text-xs px-2.5 py-1 rounded-lg w-full border border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400"
                                 value={editCategoryName}
                                 onChange={e => setEditCategoryName(e.target.value)}
                                 onBlur={() => saveCategoryRename(category.id)}
@@ -278,7 +278,7 @@ function CategoryList({
                             />
                             <button 
                                 onClick={() => saveCategoryRename(category.id)}
-                                className="text-emerald-500 p-1 hover:bg-emerald-500/10 rounded-lg flex-shrink-0"
+                                className="text-neutral-900 dark:text-white p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg flex-shrink-0"
                             >
                                 <Check size={14} />
                             </button>
@@ -298,7 +298,7 @@ function CategoryList({
                                 <Link
                                     href={`/?categoryId=${category.id}`}
                                     className={`flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase truncate rounded-lg px-1 py-1 transition-all ${isCategoryActive
-                                        ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                                        ? 'text-neutral-900 dark:text-white font-bold'
                                         : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
                                         }`}
                                     onDoubleClick={(e) => {
@@ -306,9 +306,9 @@ function CategoryList({
                                         startEditingCategory(category.id, category.name);
                                     }}
                                 >
-                                    <Folder size={13} className={isCategoryActive ? "text-emerald-500 fill-emerald-500/20" : "text-neutral-400"} />
+                                    <Folder size={13} className={isCategoryActive ? "text-neutral-900 dark:text-white fill-neutral-900/20 dark:fill-white/20" : "text-neutral-400"} />
                                     <span className="truncate">{category.name}</span>
-                                    <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-neutral-200/70 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 group-hover:bg-emerald-500/15 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                    <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-neutral-200/70 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 group-hover:bg-neutral-200 dark:group-hover:bg-neutral-800 group-hover:text-neutral-900 dark:group-hover:text-white transition-colors">
                                         {channelCount}
                                     </span>
                                 </Link>
@@ -322,7 +322,7 @@ function CategoryList({
                                             e.stopPropagation();
                                             onMoveCategoryToTop(category.id);
                                         }}
-                                        className="p-1 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10 rounded-md transition-colors"
+                                        className="p-1 text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-colors"
                                         title="Move to top priority"
                                     >
                                         <ArrowUpToLine size={12} />
@@ -368,7 +368,7 @@ function CategoryList({
                                 {channelCount === 0 && (
                                     <button
                                         onClick={(e) => handleDeleteCategory(e, category.id, category.name)}
-                                        className="p-1 text-neutral-400 hover:text-rose-500 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-colors"
+                                        className="p-1 text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-colors"
                                         title="Delete category"
                                     >
                                         <Trash2 size={11} />
@@ -388,7 +388,7 @@ function CategoryList({
             >
                 <ul
                     className={`space-y-1 rounded-xl p-0.5 transition-all duration-200 border ${isOver
-                        ? 'bg-emerald-500/10 border-emerald-500/40 shadow-inner'
+                        ? 'bg-neutral-200/50 dark:bg-neutral-800/50 border-neutral-400 dark:border-white/20 shadow-inner'
                         : 'border-transparent'
                         }`}
                 >
@@ -758,7 +758,7 @@ export default function InterestManager() {
 
     if (!interests) return (
         <div className="flex items-center justify-center p-8 text-neutral-400 gap-2">
-            <Loader2 size={16} className="animate-spin text-emerald-500" />
+            <Loader2 size={16} className="animate-spin text-neutral-400" />
             <span className="text-xs">Loading subscriptions...</span>
         </div>
     );
@@ -774,7 +774,7 @@ export default function InterestManager() {
                     href="/"
                     className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                         pathname === '/'
-                            ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-900/20'
+                            ? 'bg-black dark:bg-white text-white dark:text-black shadow-md'
                             : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'
                     }`}
                 >
@@ -785,7 +785,7 @@ export default function InterestManager() {
                     href="/watchlist"
                     className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                         pathname === '/watchlist'
-                            ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-900/20'
+                            ? 'bg-black dark:bg-white text-white dark:text-black shadow-md'
                             : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'
                     }`}
                 >
@@ -797,7 +797,7 @@ export default function InterestManager() {
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                             pathname === '/watchlist'
                                 ? 'bg-white/20 text-white'
-                                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-300 dark:border-white/10'
                         }`}>
                             {interests.watchlist.length}
                         </span>
@@ -807,7 +807,7 @@ export default function InterestManager() {
                     href="/music"
                     className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                         pathname === '/music'
-                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-900/20'
+                            ? 'bg-black dark:bg-white text-white dark:text-black shadow-md'
                             : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'
                     }`}
                 >
@@ -819,7 +819,7 @@ export default function InterestManager() {
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                             pathname === '/music'
                                 ? 'bg-white/20 text-white'
-                                : 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20'
+                                : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-300 dark:border-white/10'
                         }`}>
                             {interests.musicList.length}
                         </span>
@@ -831,12 +831,12 @@ export default function InterestManager() {
             {/* Add Category Button / Inline Form */}
 
             {isAddingCategory ? (
-                <form onSubmit={handleCreateCategory} className="mb-2.5 p-1.5 bg-neutral-100 dark:bg-neutral-800/80 rounded-xl border border-emerald-500/40 shadow-sm animate-in slide-in-from-top-2 duration-200">
+                <form onSubmit={handleCreateCategory} className="mb-2.5 p-1.5 bg-neutral-100 dark:bg-neutral-800/80 rounded-xl border border-neutral-400 shadow-sm animate-in slide-in-from-top-2 duration-200">
                     <div className="flex items-center gap-2">
                         <input
                             autoFocus
                             type="text"
-                            className="flex-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-2.5 py-1 text-xs text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                            className="flex-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-2.5 py-1 text-xs text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400"
                             placeholder="Category Name..."
                             value={newCategoryName}
                             onChange={e => setNewCategoryName(e.target.value)}
@@ -845,7 +845,7 @@ export default function InterestManager() {
                         <button 
                             type="submit" 
                             disabled={!newCategoryName.trim()}
-                            className="p-1 text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors disabled:opacity-40"
+                            className="p-1 text-neutral-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg transition-colors disabled:opacity-40"
                         >
                             <Check size={16} />
                         </button>
@@ -861,15 +861,15 @@ export default function InterestManager() {
             ) : (
                 <button
                     onClick={() => setIsAddingCategory(true)}
-                    className="w-full flex items-center justify-between px-3 py-2 mb-2 rounded-xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent hover:from-emerald-500/20 hover:via-teal-500/15 hover:to-emerald-500/10 border border-emerald-500/25 dark:border-emerald-500/35 text-emerald-700 dark:text-emerald-300 font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-emerald-500/10 group"
+                    className="w-full flex items-center justify-between px-3 py-2 mb-2 rounded-xl bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 dark:hover:bg-neutral-800 border border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white font-semibold text-xs transition-all duration-200 shadow-sm group"
                 >
                     <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-md bg-emerald-500 text-white flex items-center justify-center shadow-sm shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+                        <div className="w-5 h-5 rounded-md bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                             <Plus size={13} strokeWidth={2.5} />
                         </div>
                         <span>Add Category</span>
                     </div>
-                    <FolderPlus size={14} className="text-emerald-500/70 group-hover:text-emerald-500 transition-colors" />
+                    <FolderPlus size={14} className="text-neutral-500 group-hover:text-neutral-900 dark:group-hover:text-white transition-colors" />
                 </button>
             )}
 
@@ -915,8 +915,8 @@ export default function InterestManager() {
                 {/* Drag Overlay */}
                 <DragOverlay>
                     {activeDragCategory ? (
-                        <div className="bg-white dark:bg-neutral-900 border border-emerald-500/50 p-2.5 rounded-xl shadow-2xl text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                            <Folder size={14} className="text-emerald-500" />
+                        <div className="bg-white dark:bg-neutral-900 border border-neutral-400 dark:border-white/20 p-2.5 rounded-xl shadow-2xl text-xs font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                            <Folder size={14} className="text-neutral-900 dark:text-white" />
                             <span>{activeDragCategory.name}</span>
                         </div>
                     ) : activeDragChannel ? (
@@ -935,7 +935,7 @@ export default function InterestManager() {
                         value={channelQuery}
                         onChange={(e) => setChannelQuery(e.target.value)}
                         placeholder="Search & add channels..."
-                        className="w-full bg-neutral-100/80 dark:bg-neutral-900/80 border border-neutral-200/80 dark:border-neutral-800 rounded-xl pl-8 pr-8 py-1.5 text-xs text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200"
+                        className="w-full bg-neutral-100/80 dark:bg-neutral-900/80 border border-neutral-200/80 dark:border-neutral-800 rounded-xl pl-8 pr-8 py-1.5 text-xs text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-400/20 transition-all duration-200"
                     />
                     <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
                     {channelQuery ? (
@@ -959,7 +959,7 @@ export default function InterestManager() {
                                 <select
                                     value={targetCategoryId}
                                     onChange={(e) => setTargetCategoryId(e.target.value)}
-                                    className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[11px] px-2 py-0.5 rounded-lg border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium cursor-pointer"
+                                    className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[11px] px-2 py-0.5 rounded-lg border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-neutral-400 font-medium cursor-pointer"
                                 >
                                     {interests.categories.map(cat => (
                                         <option key={cat.id} value={cat.id}>
@@ -988,9 +988,9 @@ export default function InterestManager() {
                                 )}
                                 <span className="text-xs text-neutral-800 dark:text-neutral-200 truncate flex-1 font-medium">{c.title}</span>
                                 {addingChannelId === c.id ? (
-                                    <Loader2 size={13} className="animate-spin text-emerald-500" />
+                                    <Loader2 size={13} className="animate-spin text-neutral-400" />
                                 ) : (
-                                    <Plus size={14} className="text-emerald-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+                                    <Plus size={14} className="text-neutral-500 opacity-60 group-hover:opacity-100 transition-opacity" />
                                 )}
                             </button>
                         ))}

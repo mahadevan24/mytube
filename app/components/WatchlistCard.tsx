@@ -74,9 +74,9 @@ export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange 
     };
 
     const statusBadgeColors = {
-        unwatched: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-        watching: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-        completed: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20',
+        unwatched: 'bg-black/80 dark:bg-white/80 text-white dark:text-black border-white/20',
+        watching: 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-black border-white/20',
+        completed: 'bg-neutral-200/80 dark:bg-neutral-800/80 text-neutral-800 dark:text-neutral-200 border-neutral-300 dark:border-white/10',
     };
 
     const statusIcons = {
@@ -92,7 +92,7 @@ export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange 
     };
 
     return (
-        <div className={`group relative bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-white/10 rounded-2xl p-3 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-emerald-500/40 dark:hover:border-emerald-500/30 ${isRemoving ? 'opacity-40 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
+        <div className={`group relative bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-white/10 rounded-2xl p-3 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-neutral-400 dark:hover:border-neutral-600 ${isRemoving ? 'opacity-40 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
             <div className="space-y-3">
                 {/* Thumbnail Container */}
                 <div className="relative aspect-video rounded-xl overflow-hidden bg-neutral-200 dark:bg-neutral-950 ring-1 ring-black/5 dark:ring-white/5">
@@ -108,8 +108,8 @@ export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange 
                         className="absolute inset-0 bg-black/30 group-hover:bg-black/40 flex items-center justify-center transition-colors group"
                         title="Play Video"
                     >
-                        <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <Play size={20} className="fill-white ml-0.5" />
+                        <div className="w-12 h-12 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <Play size={20} className="fill-white dark:fill-black ml-0.5" />
                         </div>
                     </button>
 
@@ -131,7 +131,7 @@ export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange 
                     {/* Remove Button */}
                     <button
                         onClick={handleRemove}
-                        className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-red-600 text-neutral-300 hover:text-white rounded-full transition-all duration-200 backdrop-blur-md shadow-md hover:scale-110"
+                        className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black dark:hover:bg-white text-neutral-300 hover:text-white dark:hover:text-black rounded-full transition-all duration-200 backdrop-blur-md shadow-md hover:scale-110"
                         title="Remove from Watchlist"
                     >
                         <Trash2 size={14} />
@@ -142,7 +142,7 @@ export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange 
                 <div className="space-y-1 px-1">
                     <button
                         onClick={handlePlayClick}
-                        className="text-left font-semibold text-sm text-neutral-900 dark:text-white line-clamp-2 leading-snug hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                        className="text-left font-semibold text-sm text-neutral-900 dark:text-white line-clamp-2 leading-snug hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
                     >
                         {video.title}
                     </button>
@@ -167,21 +167,21 @@ export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange 
                 <div className="flex items-center gap-1 bg-neutral-200/60 dark:bg-neutral-800/60 p-0.5 rounded-lg border border-neutral-300/40 dark:border-white/5 text-[11px]">
                     <button
                         onClick={() => onStatusChange(video.id, 'unwatched')}
-                        className={`px-2 py-1 rounded-md font-medium transition-all ${video.status === 'unwatched' ? 'bg-white dark:bg-neutral-950 text-emerald-600 dark:text-emerald-400 shadow-sm font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'}`}
+                        className={`px-2 py-1 rounded-md font-medium transition-all ${video.status === 'unwatched' ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'}`}
                         title="Mark as Unwatched"
                     >
                         Saved
                     </button>
                     <button
                         onClick={() => onStatusChange(video.id, 'watching')}
-                        className={`px-2 py-1 rounded-md font-medium transition-all ${video.status === 'watching' ? 'bg-white dark:bg-neutral-950 text-amber-600 dark:text-amber-400 shadow-sm font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'}`}
+                        className={`px-2 py-1 rounded-md font-medium transition-all ${video.status === 'watching' ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'}`}
                         title="Mark as Watching"
                     >
                         Watching
                     </button>
                     <button
                         onClick={() => onStatusChange(video.id, 'completed')}
-                        className={`px-2 py-1 rounded-md font-medium transition-all ${video.status === 'completed' ? 'bg-white dark:bg-neutral-950 text-teal-600 dark:text-teal-400 shadow-sm font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'}`}
+                        className={`px-2 py-1 rounded-md font-medium transition-all ${video.status === 'completed' ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'}`}
                         title="Mark as Completed"
                     >
                         Done
@@ -193,7 +193,7 @@ export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange 
                     href={`https://www.youtube.com/watch?v=${video.id}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-1.5 text-neutral-400 hover:text-emerald-600 dark:hover:text-white hover:bg-neutral-200/50 dark:hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-1.5 text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-200/50 dark:hover:bg-white/10 rounded-lg transition-colors"
                     title="Open in YouTube"
                 >
                     <ExternalLink size={14} />
@@ -201,5 +201,4 @@ export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange 
             </div>
         </div>
     );
-
 }

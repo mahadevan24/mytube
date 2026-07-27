@@ -113,7 +113,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
 
 
     return (
-        <div className="flex h-screen bg-white dark:bg-black text-neutral-900 dark:text-white font-sans overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200">
+        <div className="flex h-screen bg-white dark:bg-black text-neutral-900 dark:text-white font-sans overflow-hidden selection:bg-neutral-800 selection:text-white">
 
             {/* MOBILE / TABLET HEADER */}
             <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-neutral-200 dark:border-white/5 z-50 flex items-center justify-between px-4">
@@ -131,21 +131,21 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                 <div className="flex items-center gap-1.5">
                     <Link
                         href="/"
-                        className={`p-2 rounded-lg transition-colors ${pathname === '/' ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
+                        className={`p-2 rounded-lg transition-colors ${pathname === '/' ? 'text-neutral-900 dark:text-white font-bold bg-neutral-100 dark:bg-white/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
                         title="Feed"
                     >
                         <Tv size={18} />
                     </Link>
                     <Link
                         href="/watchlist"
-                        className={`p-2 rounded-lg transition-colors ${pathname === '/watchlist' ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
+                        className={`p-2 rounded-lg transition-colors ${pathname === '/watchlist' ? 'text-neutral-900 dark:text-white font-bold bg-neutral-100 dark:bg-white/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
                         title="Watchlist"
                     >
                         <ListVideo size={18} />
                     </Link>
                     <Link
                         href="/music"
-                        className={`p-2 rounded-lg transition-colors ${pathname === '/music' ? 'text-purple-600 dark:text-purple-400 font-bold bg-purple-500/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
+                        className={`p-2 rounded-lg transition-colors ${pathname === '/music' ? 'text-neutral-900 dark:text-white font-bold bg-neutral-100 dark:bg-white/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
                         title="Music List"
                     >
                         <Music size={18} />
@@ -153,8 +153,6 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                     {themeToggle}
                 </div>
             </header>
-
-
 
             {/* MOBILE SIDEBAR OVERLAY */}
             {isMobileMenuOpen && (
@@ -197,7 +195,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                 {/* Drag Handle */}
                 {isDesktopSidebarOpen && (
                     <div
-                        className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-emerald-500/40 transition-colors z-10 ${isResizing ? 'bg-emerald-500/50' : ''}`}
+                        className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-neutral-400 dark:hover:bg-white/40 transition-colors z-10 ${isResizing ? 'bg-neutral-500 dark:bg-white/50' : ''}`}
                         onMouseDown={startResizing}
                     />
                 )}
@@ -212,7 +210,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setIsDesktopSidebarOpen(true)}
-                                className="p-2 -ml-2 text-neutral-600 dark:text-neutral-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-2 group"
+                                className="p-2 -ml-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-2 group"
                                 title="Open Sidebar"
                             >
                                 {mounted ? <PanelLeftOpen size={20} className="group-hover:scale-110 transition-transform" /> : <div className="w-5 h-5" />}
@@ -224,21 +222,21 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                             <nav className="flex items-center gap-1 border-l border-neutral-200 dark:border-white/10 pl-4">
                                 <Link
                                     href="/"
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-900/20' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/' ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
                                 >
                                     <Tv size={14} />
                                     <span>Personal Feed</span>
                                 </Link>
                                 <Link
                                     href="/watchlist"
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/watchlist' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-900/20' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/watchlist' ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
                                 >
                                     <ListVideo size={14} />
                                     <span>Watchlist</span>
                                 </Link>
                                 <Link
                                     href="/music"
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/music' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm shadow-purple-900/20' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/music' ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
                                 >
                                     <Music size={14} />
                                     <span>Music List</span>
@@ -256,7 +254,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                 {/* Back to Top Button */}
                 <button
                     onClick={scrollToTop}
-                    className={`fixed bottom-8 right-8 z-50 p-3 bg-indigo-600 text-white rounded-full shadow-xl hover:bg-indigo-700 hover:scale-110 transition-all duration-300 ${showBackToTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+                    className={`fixed bottom-8 right-8 z-50 p-3 bg-black dark:bg-white text-white dark:text-black rounded-full shadow-xl hover:bg-neutral-800 dark:hover:bg-neutral-200 hover:scale-110 transition-all duration-300 ${showBackToTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
                     title="Back to Top"
                 >
                     {mounted ? <ArrowUp size={24} /> : <div className="w-6 h-6" />}
@@ -264,13 +262,13 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
 
 
 
-                <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-indigo-900/5 to-transparent pointer-events-none -z-10"></div>
+                <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-neutral-200/20 dark:from-white/5 to-transparent pointer-events-none -z-10"></div>
 
                 <div className="p-4 md:p-8 max-w-7xl mx-auto relative z-10 min-h-full">
                     {isEmpty ? (
                         <div className="flex flex-col items-center justify-center h-[70vh] text-center space-y-6 animate-in fade-in duration-700">
                             <div className="w-24 h-24 bg-white dark:bg-neutral-900/80 rounded-3xl flex items-center justify-center border border-neutral-200 dark:border-white/5 shadow-2xl">
-                                {mounted ? <Layers size={48} className="text-indigo-500" /> : <div className="w-12 h-12" />}
+                                {mounted ? <Layers size={48} className="text-neutral-900 dark:text-white" /> : <div className="w-12 h-12" />}
                             </div>
                             <div className="space-y-2 max-w-md px-4">
                                 <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Your Personal Dashboard</h2>
@@ -279,7 +277,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                                     {isDesktopSidebarOpen
                                         ? " Use the sidebar to add your favorite YouTube channels."
                                         : " Open the sidebar to add your favorite YouTube channels."}
-                                    <span className="block mt-2 md:hidden text-indigo-400 text-sm">Tap the menu icon to get started.</span>
+                                    <span className="block mt-2 md:hidden text-neutral-600 dark:text-neutral-400 text-sm">Tap the menu icon to get started.</span>
                                 </p>
                             </div>
                         </div>

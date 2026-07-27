@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { google } from 'googleapis';
-import { Video, Channel } from './types';
+import { Video, Channel, MusicVideo } from './types';
 
 const youtube = google.youtube('v3');
 
@@ -417,4 +417,117 @@ export async function getSingleVideoDetails(videoId: string): Promise<Video | nu
         return null;
     }
 }
+
+// Search YouTube specifically for music videos (videoCategoryId = 10)
+export async function searchMusicVideos(
+    query: string = 'lofi ambient focus music',
+    maxResults = 24
+): Promise<Video[]> {
+    const yt = getYoutubeClient();
+    try {
+        const response = await yt.search.list({
+            key: process.env.YOUTUBE_API_KEY,
+            part: ['snippet'],
+            q: query,
+            type: ['video'],
+            videoCategoryId: '10', // Category 10 = Music
+            maxResults: maxResults,
+        });
+
+        const items = response.data.items || [];
+        const videoIds = items.map((item: any) => item.id?.videoId).filter(Boolean);
+
+        if (videoIds.length === 0) {
+            return [];
+        }
+
+        const detailsMap = await getVideoDetails(videoIds);
+
+        const decodeEntities = (str: string) =>
+            str
+                .replace(/&amp;/g, '&')
+                .replace(/&#39;/g, "'")
+                .replace(/&quot;/g, '"')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>');
+
+        const mapped: (Video | null)[] = items.map((item: any) => {
+            const videoId = item.id?.videoId;
+            if (!videoId) return null;
+            const details = detailsMap.get(videoId);
+            return {
+                id: videoId,
+                title: decodeEntities(item.snippet?.title || ''),
+                thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
+                channelTitle: item.snippet?.channelTitle || '',
+                publishedAt: item.snippet?.publishedAt || '',
+                channelId: item.snippet?.channelId || '',
+                duration: details?.duration,
+                viewCount: details?.viewCount,
+            };
+        });
+
+        const videos: Video[] = mapped.filter((v): v is Video => v !== null && Boolean(v.id));
+
+        return videos;
+    } catch (error) {
+        console.error(`Error searching music videos for "${query}":`, error);
+        return [];
+    }
+}
+
+// Generate music recommendations based on user's saved musicList first, then fallback to Korean/KDrama/K-pop music
+export async function getRecommendedMusicVideos(
+    channels: Channel[] = [],
+    musicList: MusicVideo[] = []
+): Promise<Video[]> {
+    // 1. Check saved musicList for artist/channel names first
+    if (musicList && musicList.length > 0) {
+        const uniqueArtists: string[] = [];
+        const seen = new Set<string>();
+
+        for (const item of musicList) {
+            const artist = item.channelTitle?.trim();
+            if (artist && !seen.has(artist.toLowerCase())) {
+                seen.add(artist.toLowerCase());
+                uniqueArtists.push(artist);
+            }
+            if (uniqueArtists.length >= 3) break;
+        }
+
+        if (uniqueArtists.length > 0) {
+            // Query artists individually to get focused recommendations
+            const artistPromises = uniqueArtists.map(artist =>
+                searchMusicVideos(`${artist} music`, 10)
+            );
+            const artistResults = await Promise.all(artistPromises);
+
+            const combined: Video[] = [];
+            const existingIds = new Set(musicList.map(m => m.id));
+            const seenIds = new Set<string>();
+
+            const maxLen = Math.max(0, ...artistResults.map(r => r.length));
+            for (let i = 0; i < maxLen; i++) {
+                for (const res of artistResults) {
+                    if (i < res.length) {
+                        const video = res[i];
+                        if (!seenIds.has(video.id) && !existingIds.has(video.id)) {
+                            seenIds.add(video.id);
+                            combined.push(video);
+                        }
+                    }
+                }
+            }
+
+            if (combined.length > 0) {
+                return combined.slice(0, 24);
+            }
+        }
+    }
+
+    // 2. Fallback to Korean, K-drama, K-pop music
+    const fallbackQuery = 'korean ost kdrama kpop music';
+    return await searchMusicVideos(fallbackQuery, 24);
+}
+
 

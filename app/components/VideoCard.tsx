@@ -135,7 +135,7 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
 
     return (
         <div className="group flex flex-col gap-3">
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-neutral-200 dark:bg-neutral-900 shadow-sm dark:shadow-lg ring-1 ring-neutral-200 dark:ring-white/5 group-hover:ring-indigo-500/50 dark:group-hover:ring-indigo-500/30 transition-all duration-300">
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-neutral-200 dark:bg-neutral-900 shadow-sm dark:shadow-lg ring-1 ring-neutral-200 dark:ring-white/5 group-hover:ring-neutral-400 dark:group-hover:ring-white/30 transition-all duration-300">
                 <a
                     href={ytExternalLink}
                     target="_blank"
@@ -148,8 +148,8 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
 
                     {/* Resume Timestamp Badge */}
                     {mounted && progress && progress.seconds > 0 && (
-                        <span className="absolute bottom-2 left-2 bg-black/85 backdrop-blur-md text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-emerald-500/30 flex items-center gap-1 z-10">
-                            <Play size={10} className="fill-emerald-400" />
+                        <span className="absolute bottom-2 left-2 bg-black/85 backdrop-blur-md text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-white/30 flex items-center gap-1 z-10">
+                            <Play size={10} className="fill-white" />
                             Resume {formatSecondsToTimestamp(progress.seconds)}
                         </span>
                     )}
@@ -160,11 +160,11 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                         </span>
                     )}
 
-                    {/* Watch progress red bar at bottom of thumbnail */}
+                    {/* Watch progress bar at bottom of thumbnail */}
                     {mounted && progress && progress.seconds > 0 && (
                         <div className="absolute bottom-0 left-0 right-0 h-1 bg-neutral-800/80 z-20 overflow-hidden">
                             <div
-                                className="h-full bg-red-600 transition-all duration-300"
+                                className="h-full bg-neutral-900 dark:bg-white transition-all duration-300"
                                 style={{ width: `${progressPercent > 0 ? progressPercent : 100}%` }}
                             />
                         </div>
@@ -176,7 +176,7 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                     <button
                         onClick={handleSaveToMusic}
                         disabled={isSavingMusic}
-                        className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-md ${isSavedMusic ? 'bg-purple-600 text-white opacity-100' : 'bg-black/60 hover:bg-purple-600 text-white opacity-0 group-hover:opacity-100 hover:scale-110'}`}
+                        className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-md ${isSavedMusic ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 opacity-100' : 'bg-black/60 hover:bg-neutral-800 text-white opacity-0 group-hover:opacity-100 hover:scale-110'}`}
                         title={isSavedMusic ? 'Saved to Music List' : 'Save to Music List'}
                     >
                         {isSavingMusic ? (
@@ -191,7 +191,7 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                     <button
                         onClick={handleSaveToWatchlist}
                         disabled={isSaving}
-                        className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-md ${isSaved ? 'bg-emerald-600 text-white opacity-100' : 'bg-black/60 hover:bg-indigo-600 text-white opacity-0 group-hover:opacity-100 hover:scale-110'}`}
+                        className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-md ${isSaved ? 'bg-black dark:bg-white text-white dark:text-black opacity-100' : 'bg-black/60 hover:bg-neutral-800 text-white opacity-0 group-hover:opacity-100 hover:scale-110'}`}
                         title={isSaved ? 'Saved to Watchlist' : 'Save to Watchlist'}
                     >
                         {isSaving ? (
@@ -209,13 +209,13 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                     href={ytExternalLink}
                     target="_blank"
                     onClick={handleClick}
-                    className="text-neutral-900 dark:text-neutral-200 font-semibold text-sm line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-white transition-colors cursor-pointer"
+                    className="text-neutral-900 dark:text-neutral-200 font-semibold text-sm line-clamp-2 leading-snug group-hover:text-black dark:group-hover:text-white transition-colors cursor-pointer"
                     rel="noreferrer"
                 >
                     {video.title}
                 </a>
                 <div className="flex items-center justify-between mt-1">
-                    <Link href={`https://youtube.com/channel/${video.channelId}`} target="_blank" className="text-neutral-500 dark:text-neutral-400 text-xs hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors truncate max-w-[60%]">
+                    <Link href={`https://youtube.com/channel/${video.channelId}`} target="_blank" className="text-neutral-500 dark:text-neutral-400 text-xs hover:text-black dark:hover:text-white transition-colors truncate max-w-[60%]">
                         {video.channelTitle}
                     </Link>
                     <div className="text-neutral-500 text-[10px] flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900/50 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-white/5">
