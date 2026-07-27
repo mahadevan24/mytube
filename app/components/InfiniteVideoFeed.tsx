@@ -12,6 +12,7 @@ interface InfiniteVideoFeedProps {
     categoryId?: string;
     initialPageToken?: string;
     initialChannelTokens?: Record<string, string | undefined>;
+    searchQuery?: string;
 }
 
 export default function InfiniteVideoFeed({
@@ -22,6 +23,7 @@ export default function InfiniteVideoFeed({
     categoryId,
     initialPageToken,
     initialChannelTokens,
+    searchQuery,
 }: InfiniteVideoFeedProps) {
     // Track channel tokens for home feed pagination
     const [channelTokens, setChannelTokens] = useState<Record<string, string | undefined>>(

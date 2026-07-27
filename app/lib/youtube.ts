@@ -254,6 +254,95 @@ export async function searchChannels(query: string): Promise<Channel[]> {
     }
 }
 
+// Search videos belonging specifically to a set of channels matching a query
+export async function searchCategoryVideos(
+    channels: Channel[],
+    query: string,
+    maxResultsPerChannel = 10
+): Promise<{ videos: Video[]; hasMore: boolean }> {
+    if (channels.length === 0 || !query.trim()) {
+        return { videos: [], hasMore: false };
+    }
+
+    const yt = getYoutubeClient();
+    try {
+        const searchPromises = channels.map(async (ch) => {
+            try {
+                const response = await yt.search.list({
+                    key: process.env.YOUTUBE_API_KEY,
+                    part: ['snippet'],
+                    q: query,
+                    channelId: ch.id,
+                    type: ['video'],
+                    maxResults: maxResultsPerChannel,
+                });
+
+                const items = response.data.items || [];
+                const videoIds = items.map((item: any) => item.id?.videoId).filter(Boolean);
+                return { channelId: ch.id, items, videoIds };
+            } catch (err) {
+                console.error(`Error searching channel ${ch.id} for "${query}":`, err);
+                return { channelId: ch.id, items: [], videoIds: [] };
+            }
+        });
+
+        const channelResults = await Promise.all(searchPromises);
+        const allVideoIds = Array.from(new Set(channelResults.flatMap((r) => r.videoIds)));
+
+        if (allVideoIds.length === 0) {
+            return { videos: [], hasMore: false };
+        }
+
+        const detailsMap = await getVideoDetails(allVideoIds);
+
+        const decodeEntities = (str: string) =>
+            str
+                .replace(/&amp;/g, '&')
+                .replace(/&#39;/g, "'")
+                .replace(/&quot;/g, '"')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>');
+
+        const allVideos: Video[] = [];
+        for (const res of channelResults) {
+            for (const item of res.items) {
+                const videoId = item.id?.videoId;
+                if (!videoId) continue;
+                const details = detailsMap.get(videoId);
+                allVideos.push({
+                    id: videoId,
+                    title: decodeEntities(item.snippet?.title || ''),
+                    thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
+                    channelTitle: item.snippet?.channelTitle || '',
+                    publishedAt: item.snippet?.publishedAt || '',
+                    channelId: res.channelId,
+                    duration: details?.duration,
+                    viewCount: details?.viewCount,
+                });
+            }
+        }
+
+        // Filter short videos < 5m and remove duplicates
+        const seenIds = new Set<string>();
+        const filteredVideos: Video[] = [];
+        for (const v of allVideos) {
+            if (v.id && !seenIds.has(v.id) && !isTooShort(v.duration)) {
+                seenIds.add(v.id);
+                filteredVideos.push(v);
+            }
+        }
+
+        // Sort by publishedAt desc
+        filteredVideos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+        return { videos: filteredVideos, hasMore: false };
+    } catch (error) {
+        console.error(`Error searching category videos for "${query}":`, error);
+        return { videos: [], hasMore: false };
+    }
+}
+
+
 // Extract 11-character YouTube video ID from various URL patterns or direct ID input
 export function extractYouTubeVideoId(input: string): string | null {
     if (!input) return null;

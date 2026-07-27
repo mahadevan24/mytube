@@ -1,9 +1,10 @@
 
-import { getPersonalizedFeed, getChannelVideos } from '../lib/youtube';
-import { UserInterests, Video } from '../lib/types';
+import { getPersonalizedFeed, getChannelVideos, searchCategoryVideos } from '../lib/youtube';
+import { UserInterests, Video, Channel } from '../lib/types';
 import { getStoredInterests } from '../lib/storage';
 import InfiniteVideoFeed from './InfiniteVideoFeed';
 import CategoryTabs from './CategoryTabs';
+import TabVideoSearch from './TabVideoSearch';
 
 interface FeedFetcherProps {
     searchParams: { [key: string]: string | string[] | undefined };
@@ -12,10 +13,10 @@ interface FeedFetcherProps {
 export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
     const channelIdFilter = searchParams.channelId as string | undefined;
     let categoryIdFilter = searchParams.categoryId as string | undefined;
+    const searchQuery = searchParams.q as string | undefined;
 
     // Fetch initial interests from server-side storage
     const interests: UserInterests = await getStoredInterests();
-
     const hasInterests = interests.channels.length > 0;
 
     // Find focus category if available (case-insensitive name check "focus")
@@ -34,8 +35,31 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
     let initialPageToken: string | undefined;
     let initialChannelTokens: Record<string, string | undefined> | undefined;
 
+    // Determine current feed scope name and channel list for in-tab search
+    let scopeName = "Home Feed";
+    let scopeChannels: Channel[] = interests.channels;
+
+    if (channelIdFilter) {
+        const ch = interests.channels.find(c => c.id === channelIdFilter);
+        scopeName = ch ? ch.title : "Channel";
+        scopeChannels = ch ? [ch] : [{ id: channelIdFilter, title: 'Channel' }];
+    } else if (categoryIdFilter && categoryIdFilter !== 'all') {
+        const cat = interests.categories?.find(c => c.id === categoryIdFilter);
+        scopeName = cat ? cat.name : "Category";
+        scopeChannels = cat ? interests.channels.filter(c => cat.channelIds.includes(c.id)) : [];
+    } else {
+        scopeName = "Home (All Categories)";
+        scopeChannels = interests.channels;
+    }
+
     if (hasInterests) {
-        if (channelIdFilter) {
+        if (searchQuery && searchQuery.trim()) {
+            // Search Mode: Query YouTube API filtered by channels in current tab scope
+            feedTitle = `Search results for "${searchQuery}" in ${scopeName}`;
+            const searchResult = await searchCategoryVideos(scopeChannels, searchQuery);
+            initialVideos = searchResult.videos;
+            initialPageToken = undefined;
+        } else if (channelIdFilter) {
             // Filter by Channel
             const channel = interests.channels.find(c => c.id === channelIdFilter);
             if (channel) {
@@ -46,7 +70,6 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
                 initialVideos = result.videos;
                 initialPageToken = result.nextPageToken;
             } else {
-                // Channel not in interests (or invalid ID), fallback to home or empty
                 feedType = 'channel';
                 channelId = channelIdFilter;
                 const result = await getChannelVideos(channelIdFilter, 20);
@@ -79,7 +102,6 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
             const result = await getPersonalizedFeed(interests.channels, 20);
             initialVideos = result.videos;
             initialChannelTokens = result.channelTokens;
-            // For home feed, nextPageToken is the channelTokens JSON string
             initialPageToken = result.hasMore ? JSON.stringify(result.channelTokens) : undefined;
         }
     }
@@ -89,6 +111,15 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
             {interests.categories && interests.categories.length > 0 && (
                 <CategoryTabs categories={interests.categories} />
             )}
+            
+            {hasInterests && (
+                <TabVideoSearch
+                    scopeName={scopeName}
+                    channelCount={scopeChannels.length}
+                    initialQuery={searchQuery}
+                />
+            )}
+
             <InfiniteVideoFeed
                 initialVideos={initialVideos}
                 title={feedTitle}
@@ -97,7 +128,9 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
                 categoryId={categoryId}
                 initialPageToken={initialPageToken}
                 initialChannelTokens={initialChannelTokens}
+                searchQuery={searchQuery}
             />
         </div>
     );
 }
+
