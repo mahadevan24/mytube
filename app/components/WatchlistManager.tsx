@@ -34,7 +34,7 @@ export default function WatchlistManager({ initialWatchlist }: WatchlistManagerP
     const [inputUrl, setInputUrl] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
-    const [filterStatus, setFilterStatus] = useState<'all' | WatchlistStatus>('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | WatchlistStatus>('watching');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'title'>('newest');
     const [isPending, startTransition] = useTransition();
