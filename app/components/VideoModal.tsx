@@ -25,6 +25,7 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
     const [isPlayingFromStart, setIsPlayingFromStart] = useState(false);
     const playerRef = useRef<any>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -38,9 +39,32 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
             setCurrentSeconds(progress.seconds);
         }
 
+        const toggleFullscreen = () => {
+            const target = containerRef.current || iframeRef.current;
+            if (!document.fullscreenElement) {
+                if (target?.requestFullscreen) {
+                    target.requestFullscreen().catch(() => {});
+                } else if ((target as any)?.webkitRequestFullscreen) {
+                    (target as any).webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                } else if ((document as any).webkitExitFullscreen) {
+                    (document as any).webkitExitFullscreen();
+                }
+            }
+        };
+
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 onClose();
+            } else if (e.key === 'f' || e.key === 'F') {
+                const activeTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+                if (activeTag !== 'input' && activeTag !== 'textarea') {
+                    e.preventDefault();
+                    toggleFullscreen();
+                }
             }
         };
 
@@ -171,7 +195,7 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6 md:p-10 animate-in fade-in duration-300"
             onClick={handleBackdropClick}
         >
-            <div className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 ring-1 ring-white/10 flex flex-col items-center justify-center">
+            <div ref={containerRef} className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 ring-1 ring-white/10 flex flex-col items-center justify-center">
 
                 {/* Control bar / header overlay */}
                 <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
@@ -231,7 +255,7 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
                     src={iframeSrc}
                     title="YouTube video player"
                     frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                     allowFullScreen
                 ></iframe>
             </div>
