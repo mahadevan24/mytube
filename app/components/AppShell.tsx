@@ -130,8 +130,8 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                 </div>
                 <div className="flex items-center gap-1.5">
                     <Link
-                        href="/"
-                        className={`p-2 rounded-lg transition-colors ${pathname === '/' ? 'text-neutral-900 dark:text-white font-bold bg-neutral-100 dark:bg-white/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
+                        href="/feed"
+                        className={`p-2 rounded-lg transition-colors ${pathname === '/feed' ? 'text-neutral-900 dark:text-white font-bold bg-neutral-100 dark:bg-white/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
                         title="Feed"
                     >
                         <Tv size={18} />
@@ -221,8 +221,8 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
 
                             <nav className="flex items-center gap-1 border-l border-neutral-200 dark:border-white/10 pl-4">
                                 <Link
-                                    href="/"
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/' ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
+                                    href="/feed"
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/feed' ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
                                 >
                                     <Tv size={14} />
                                     <span>Personal Feed</span>

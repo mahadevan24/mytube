@@ -96,7 +96,7 @@ function SortableChannelItem({
                 }`}
             >
                 <Link
-                    href={`/?channelId=${channel.id}`}
+                    href={`/feed?channelId=${channel.id}`}
                     className="flex items-center gap-2 overflow-hidden flex-1 min-w-0"
                 >
                     <div 
@@ -296,7 +296,7 @@ function CategoryList({
                                     <GripVertical size={13} />
                                 </div>
                                 <Link
-                                    href={`/?categoryId=${category.id}`}
+                                    href={`/feed?categoryId=${category.id}`}
                                     className={`flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase truncate rounded-lg px-1 py-1 transition-all ${isCategoryActive
                                         ? 'text-neutral-900 dark:text-white font-bold'
                                         : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
@@ -543,7 +543,7 @@ export default function InterestManager() {
         e.stopPropagation();
         try {
             await removeChannelAction(id);
-            if (currentChannelId === id) router.push('/');
+            if (currentChannelId === id) router.push('/feed');
             showToast(`Removed "${title}" from channels`, 'info');
             await refreshData();
         } catch (error) {
@@ -771,9 +771,9 @@ export default function InterestManager() {
             {/* Top Sidebar Navigation */}
             <div className="flex flex-col gap-1 mb-3 pb-3 border-b border-neutral-200 dark:border-white/10">
                 <Link
-                    href="/"
+                    href="/feed"
                     className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                        pathname === '/'
+                        pathname === '/feed'
                             ? 'bg-black dark:bg-white text-white dark:text-black shadow-md'
                             : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'
                     }`}
