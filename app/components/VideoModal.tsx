@@ -199,7 +199,7 @@ export default function VideoModal({ videoId, onClose }: VideoModalProps) {
                             href={ytAppLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600/90 hover:bg-red-600 text-white text-xs font-semibold rounded-full backdrop-blur-md transition-all hover:scale-105 shadow-md border border-red-500/30"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-neutral-200 text-black text-xs font-semibold rounded-full backdrop-blur-md transition-all hover:scale-105 shadow-md border border-white/20"
                             title="Open in YouTube app / website at current timestamp"
                         >
                             <ExternalLink size={14} />
