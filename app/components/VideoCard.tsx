@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Video } from '../lib/types';
 import Link from 'next/link';
-import { Clock } from 'lucide-react';
+import { Clock, Bookmark, Check, Loader2 } from 'lucide-react';
+import { addVideoToWatchlistAction } from '../actions';
+import { useToast } from './Toast';
 
 function formatDuration(duration?: string) {
     if (!duration) return null;
@@ -51,6 +53,9 @@ interface VideoCardProps {
 
 export default function VideoCard({ video, onPlay }: VideoCardProps) {
     const [mounted, setMounted] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const { showToast } = useToast();
 
     useEffect(() => {
         setMounted(true);
@@ -62,6 +67,26 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
             onPlay(video.id);
         }
     };
+
+    const handleSaveToWatchlist = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isSaved || isSaving) return;
+
+        setIsSaving(true);
+        try {
+            const res = await addVideoToWatchlistAction(video);
+            if (res.success) {
+                setIsSaved(true);
+                showToast(`Saved "${video.title}" to Watchlist!`, 'success');
+            }
+        } catch {
+            showToast('Failed to save video to Watchlist.', 'error');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
 
     return (
         <div className="group flex flex-col gap-3">
@@ -76,14 +101,28 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                     <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
 
-                    {/* Play icon overlay on hover could go here, but keeping it clean for now */}
-
                     {video.duration && (
                         <span className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-md text-white/90 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-white/10 tracking-wide">
                             {formatDuration(video.duration)}
                         </span>
                     )}
                 </a>
+
+                {/* Save to Watchlist Quick Button */}
+                <button
+                    onClick={handleSaveToWatchlist}
+                    disabled={isSaving}
+                    className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-md ${isSaved ? 'bg-emerald-600 text-white opacity-100' : 'bg-black/60 hover:bg-indigo-600 text-white opacity-0 group-hover:opacity-100 hover:scale-110'}`}
+                    title={isSaved ? 'Saved to Watchlist' : 'Save to Watchlist'}
+                >
+                    {isSaving ? (
+                        <Loader2 size={14} className="animate-spin" />
+                    ) : isSaved ? (
+                        <Check size={14} />
+                    ) : (
+                        <Bookmark size={14} />
+                    )}
+                </button>
             </div>
             <div className="flex flex-col gap-1 px-1">
                 <a
@@ -112,3 +151,4 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
         </div>
     );
 }
+

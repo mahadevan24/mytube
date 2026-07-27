@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, PanelLeftClose, PanelLeftOpen, Layers, ArrowUp } from 'lucide-react';
+import { Menu, X, PanelLeftClose, PanelLeftOpen, Layers, ArrowUp, Tv, ListVideo } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+
 
 interface AppShellProps {
     sidebar: React.ReactNode;
@@ -126,8 +128,26 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                         MyTube
                     </h1>
                 </div>
-                {themeToggle}
+                <div className="flex items-center gap-1.5">
+                    <Link
+                        href="/"
+                        className={`p-2 rounded-lg transition-colors ${pathname === '/' ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
+                        title="Feed"
+                    >
+                        <Tv size={18} />
+                    </Link>
+                    <Link
+                        href="/watchlist"
+                        className={`p-2 rounded-lg transition-colors ${pathname === '/watchlist' ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
+                        title="Watchlist"
+                    >
+                        <ListVideo size={18} />
+                    </Link>
+                    {themeToggle}
+                </div>
             </header>
+
+
 
             {/* MOBILE SIDEBAR OVERLAY */}
             {isMobileMenuOpen && (
@@ -182,7 +202,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                 {/* Desktop Expand Header Bar (when sidebar is closed) */}
                 {!isDesktopSidebarOpen && (
                     <header className="hidden md:flex sticky top-0 z-30 h-14 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-neutral-200/80 dark:border-white/5 items-center justify-between px-6 transition-all">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setIsDesktopSidebarOpen(true)}
                                 className="p-2 -ml-2 text-neutral-600 dark:text-neutral-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-2 group"
@@ -193,12 +213,31 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                                     MyTube
                                 </span>
                             </button>
+
+                            <nav className="flex items-center gap-1 border-l border-neutral-200 dark:border-white/10 pl-4">
+                                <Link
+                                    href="/"
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-900/20' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
+                                >
+                                    <Tv size={14} />
+                                    <span>Personal Feed</span>
+                                </Link>
+                                <Link
+                                    href="/watchlist"
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/watchlist' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-900/20' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
+                                >
+                                    <ListVideo size={14} />
+                                    <span>Watchlist</span>
+                                </Link>
+                            </nav>
+
                         </div>
                         <div className="flex items-center gap-2">
                             {themeToggle}
                         </div>
                     </header>
                 )}
+
 
                 {/* Back to Top Button */}
                 <button

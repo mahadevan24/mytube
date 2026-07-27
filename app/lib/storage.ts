@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Channel, UserInterests, Category } from './types';
+import { Channel, UserInterests, Category, WatchlistVideo, WatchlistStatus } from './types';
 
 const UNCATEGORIZED_ID = 'uncategorized';
 
@@ -21,20 +21,27 @@ async function readData(): Promise<UserInterests> {
             // Default if no data found
             return {
                 channels: [],
-                categories: [{ id: UNCATEGORIZED_ID, name: 'Channels', channelIds: [] }]
+                categories: [{ id: UNCATEGORIZED_ID, name: 'Channels', channelIds: [] }],
+                watchlist: []
             };
         }
 
-        return data.content as UserInterests;
+        const res = data.content as UserInterests;
+        if (!res.watchlist) {
+            res.watchlist = [];
+        }
+        return res;
     } catch (error) {
         console.error('Error reading data:', error);
         // Return default structure on error to prevent app crash
         return {
             channels: [],
-            categories: [{ id: UNCATEGORIZED_ID, name: 'Channels', channelIds: [] }]
+            categories: [{ id: UNCATEGORIZED_ID, name: 'Channels', channelIds: [] }],
+            watchlist: []
         };
     }
 }
+
 
 async function writeData(data: UserInterests): Promise<void> {
     try {
@@ -203,4 +210,45 @@ export const moveChannelToCategory = async (channelId: string, targetCategoryId:
 
     await writeData(interests);
 };
+
+// --- Watchlist Storage Functions ---
+
+export const getWatchlistVideos = async (): Promise<WatchlistVideo[]> => {
+    const interests = await readData();
+    return interests.watchlist || [];
+};
+
+export const addWatchlistVideo = async (video: WatchlistVideo): Promise<void> => {
+    const interests = await readData();
+    if (!interests.watchlist) interests.watchlist = [];
+
+    // Avoid duplicate additions; if already exists, move it to top & update timestamp/status
+    const existingIndex = interests.watchlist.findIndex(v => v.id === video.id);
+    if (existingIndex !== -1) {
+        interests.watchlist.splice(existingIndex, 1);
+    }
+
+    interests.watchlist.unshift(video); // Prepend to top
+    await writeData(interests);
+};
+
+export const removeWatchlistVideo = async (videoId: string): Promise<void> => {
+    const interests = await readData();
+    if (!interests.watchlist) return;
+
+    interests.watchlist = interests.watchlist.filter(v => v.id !== videoId);
+    await writeData(interests);
+};
+
+export const updateWatchlistStatus = async (videoId: string, status: WatchlistStatus): Promise<void> => {
+    const interests = await readData();
+    if (!interests.watchlist) return;
+
+    const item = interests.watchlist.find(v => v.id === videoId);
+    if (item) {
+        item.status = status;
+        await writeData(interests);
+    }
+};
+
 

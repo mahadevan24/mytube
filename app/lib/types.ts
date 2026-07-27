@@ -21,7 +21,17 @@ export interface Category {
   channelIds: string[];
 }
 
+export type WatchlistStatus = 'unwatched' | 'watching' | 'completed';
+
+export interface WatchlistVideo extends Video {
+  addedAt: string; // ISO 8601 string
+  status: WatchlistStatus;
+  notes?: string;
+}
+
 export interface UserInterests {
   channels: Channel[];
   categories: Category[];
+  watchlist?: WatchlistVideo[];
 }
+

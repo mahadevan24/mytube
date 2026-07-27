@@ -253,3 +253,79 @@ export async function searchChannels(query: string): Promise<Channel[]> {
         return [];
     }
 }
+
+// Extract 11-character YouTube video ID from various URL patterns or direct ID input
+export function extractYouTubeVideoId(input: string): string | null {
+    if (!input) return null;
+    const trimmed = input.trim();
+
+    // 1. Direct ID check (11 characters like dQw4w9WgXcQ)
+    if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+        return trimmed;
+    }
+
+    // 2. Standard URL regex patterns
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+        /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+        /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+        /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+        /(?:music\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/
+    ];
+
+    for (const pattern of patterns) {
+        const match = trimmed.match(pattern);
+        if (match && match[1]) {
+            return match[1];
+        }
+    }
+
+    // 3. Fallback: URL search parameter 'v' extraction
+    try {
+        const urlString = trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
+        const url = new URL(urlString);
+        const v = url.searchParams.get('v');
+        if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) {
+            return v;
+        }
+    } catch {
+        // Ignore invalid URL parse errors
+    }
+
+    return null;
+}
+
+// Fetch single video details by video ID using YouTube Data API
+export async function getSingleVideoDetails(videoId: string): Promise<Video | null> {
+    const yt = getYoutubeClient();
+    try {
+        const response = await yt.videos.list({
+            key: process.env.YOUTUBE_API_KEY,
+            part: ['snippet', 'contentDetails', 'statistics'],
+            id: [videoId],
+        });
+
+        const item = response.data.items?.[0];
+        if (!item) return null;
+
+        const snippet = item.snippet;
+        const contentDetails = item.contentDetails;
+        const statistics = item.statistics;
+
+        return {
+            id: item.id || videoId,
+            title: snippet?.title || 'Untitled Video',
+            thumbnail: snippet?.thumbnails?.maxres?.url || snippet?.thumbnails?.high?.url || snippet?.thumbnails?.medium?.url || snippet?.thumbnails?.default?.url || '',
+            channelTitle: snippet?.channelTitle || 'Unknown Channel',
+            channelId: snippet?.channelId || '',
+            publishedAt: snippet?.publishedAt || new Date().toISOString(),
+            duration: contentDetails?.duration || undefined,
+            viewCount: statistics?.viewCount || undefined,
+        };
+
+    } catch (error) {
+        console.error(`Error fetching video details for ${videoId}:`, error);
+        return null;
+    }
+}
+

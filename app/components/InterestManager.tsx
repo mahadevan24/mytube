@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
     getInterestsAction,
@@ -15,7 +15,8 @@ import {
     searchChannelsAction
 } from '../actions';
 import { Channel, UserInterests, Category } from '../lib/types';
-import { Search, Plus, X, Tv, Trash2, GripVertical, FolderPlus, Edit2, Check, Loader2, Folder, FolderInput, ArrowUpToLine, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, Plus, X, Tv, Trash2, GripVertical, FolderPlus, Edit2, Check, Loader2, Folder, FolderInput, ArrowUpToLine, ChevronUp, ChevronDown, ListVideo } from 'lucide-react';
+
 import { useToast } from './Toast';
 import {
     DndContext,
@@ -415,7 +416,9 @@ function CategoryList({
 export default function InterestManager() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const pathname = usePathname();
     const { showToast } = useToast();
+
 
     const currentChannelId = searchParams.get('channelId');
     const currentCategoryId = searchParams.get('categoryId');
@@ -765,7 +768,46 @@ export default function InterestManager() {
     return (
         <div className="flex flex-col h-full px-3 py-2">
             
+            {/* Top Sidebar Navigation */}
+            <div className="flex flex-col gap-1 mb-3 pb-3 border-b border-neutral-200 dark:border-white/10">
+                <Link
+                    href="/"
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        pathname === '/'
+                            ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-900/20'
+                            : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'
+                    }`}
+                >
+                    <Tv size={16} />
+                    <span>Personal Feed</span>
+                </Link>
+                <Link
+                    href="/watchlist"
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        pathname === '/watchlist'
+                            ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-900/20'
+                            : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'
+                    }`}
+                >
+                    <div className="flex items-center gap-2.5">
+                        <ListVideo size={16} />
+                        <span>Watchlist</span>
+                    </div>
+                    {interests.watchlist && interests.watchlist.length > 0 && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            pathname === '/watchlist'
+                                ? 'bg-white/20 text-white'
+                                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        }`}>
+                            {interests.watchlist.length}
+                        </span>
+                    )}
+                </Link>
+            </div>
+
+
             {/* Add Category Button / Inline Form */}
+
             {isAddingCategory ? (
                 <form onSubmit={handleCreateCategory} className="mb-2.5 p-1.5 bg-neutral-100 dark:bg-neutral-800/80 rounded-xl border border-emerald-500/40 shadow-sm animate-in slide-in-from-top-2 duration-200">
                     <div className="flex items-center gap-2">
