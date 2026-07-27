@@ -205,7 +205,29 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
             <div ref={containerRef} className="group relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 ring-1 ring-white/10 flex flex-col items-center justify-center">
 
                 {/* Control bar / header overlay */}
-                <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+                <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-start gap-2.5 pointer-events-none">
+                    {/* Action buttons: Open in YouTube & Close */}
+                    <div className="pointer-events-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
+                        <button
+                            onClick={onClose}
+                            className="p-2 bg-black/60 hover:bg-black/90 text-white rounded-full transition-all hover:scale-110 backdrop-blur-md border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/50"
+                            aria-label="Close modal"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <a
+                            href={ytAppLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-neutral-200 text-black text-xs font-semibold rounded-full backdrop-blur-md transition-all hover:scale-105 shadow-md border border-white/20"
+                            title="Open in YouTube app / website at current timestamp"
+                        >
+                            <ExternalLink size={14} />
+                            <span className="hidden sm:inline">Open in YouTube</span>
+                        </a>
+                    </div>
+
                     {/* Timestamp Resume & Loop Badges */}
                     <div className="flex items-center gap-2">
                         {loop && (
@@ -230,28 +252,6 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
                                 </button>
                             </div>
                         ) : null}
-                    </div>
-
-                    {/* Action buttons: Open in YouTube & Close */}
-                    <div className="pointer-events-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
-                        <a
-                            href={ytAppLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-neutral-200 text-black text-xs font-semibold rounded-full backdrop-blur-md transition-all hover:scale-105 shadow-md border border-white/20"
-                            title="Open in YouTube app / website at current timestamp"
-                        >
-                            <ExternalLink size={14} />
-                            <span className="hidden sm:inline">Open in YouTube</span>
-                        </a>
-
-                        <button
-                            onClick={onClose}
-                            className="p-2 bg-black/60 hover:bg-black/90 text-white rounded-full transition-all hover:scale-110 backdrop-blur-md border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/50"
-                            aria-label="Close modal"
-                        >
-                            <X size={20} />
-                        </button>
                     </div>
                 </div>
 
