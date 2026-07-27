@@ -15,7 +15,7 @@ import {
     searchChannelsAction
 } from '../actions';
 import { Channel, UserInterests, Category } from '../lib/types';
-import { Search, Plus, X, Tv, Trash2, GripVertical, FolderPlus, Edit2, Check, Loader2, Folder, FolderInput, ArrowUpToLine, ChevronUp, ChevronDown, ListVideo } from 'lucide-react';
+import { Search, Plus, X, Tv, Trash2, GripVertical, FolderPlus, Edit2, Check, Loader2, Folder, FolderInput, ArrowUpToLine, ChevronUp, ChevronDown, ListVideo, Music } from 'lucide-react';
 
 import { useToast } from './Toast';
 import {
@@ -800,6 +800,28 @@ export default function InterestManager() {
                                 : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                         }`}>
                             {interests.watchlist.length}
+                        </span>
+                    )}
+                </Link>
+                <Link
+                    href="/music"
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        pathname === '/music'
+                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-900/20'
+                            : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'
+                    }`}
+                >
+                    <div className="flex items-center gap-2.5">
+                        <Music size={16} />
+                        <span>Music List</span>
+                    </div>
+                    {interests.musicList && interests.musicList.length > 0 && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            pathname === '/music'
+                                ? 'bg-white/20 text-white'
+                                : 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20'
+                        }`}>
+                            {interests.musicList.length}
                         </span>
                     )}
                 </Link>

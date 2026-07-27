@@ -4,7 +4,7 @@ import { searchChannels, extractYouTubeVideoId, getSingleVideoDetails } from './
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import * as db from './lib/storage';
-import { Channel, Category, Video, WatchlistVideo, WatchlistStatus } from './lib/types';
+import { Channel, Category, Video, WatchlistVideo, WatchlistStatus, MusicVideo } from './lib/types';
 import { revalidatePath } from 'next/cache';
 
 
@@ -113,6 +113,58 @@ export async function updateWatchlistStatusAction(videoId: string, status: Watch
     revalidatePath('/');
     return { success: true };
 }
+
+// --- Music List Actions ---
+
+export async function getMusicListAction() {
+    return await db.getMusicListVideos();
+}
+
+export async function addMusicVideoByUrlAction(inputUrl: string) {
+    const videoId = extractYouTubeVideoId(inputUrl);
+    if (!videoId) {
+        return { error: 'Invalid YouTube link or Video ID. Please check the URL and try again.' };
+    }
+
+    const videoDetails = await getSingleVideoDetails(videoId);
+    if (!videoDetails) {
+        return { error: 'Could not fetch video details. Please make sure the video exists and is public.' };
+    }
+
+    const musicVideo: MusicVideo = {
+        ...videoDetails,
+        addedAt: new Date().toISOString(),
+    };
+
+    await db.addMusicVideo(musicVideo);
+    revalidatePath('/music');
+    revalidatePath('/');
+    return { success: true, video: musicVideo };
+}
+
+export async function addVideoToMusicAction(video: Video) {
+    const musicVideo: MusicVideo = {
+        ...video,
+        addedAt: new Date().toISOString(),
+    };
+    await db.addMusicVideo(musicVideo);
+    revalidatePath('/music');
+    revalidatePath('/');
+    return { success: true };
+}
+
+export async function removeMusicVideoAction(videoId: string) {
+    try {
+        await db.removeMusicVideo(videoId);
+        revalidatePath('/music');
+        revalidatePath('/');
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to remove music video:', error);
+        return { success: false, error: 'Failed to remove video' };
+    }
+}
+
 
 
 // --------------------------------

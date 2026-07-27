@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Channel, UserInterests, Category, WatchlistVideo, WatchlistStatus } from './types';
+import { Channel, UserInterests, Category, WatchlistVideo, WatchlistStatus, MusicVideo } from './types';
 
 const UNCATEGORIZED_ID = 'uncategorized';
 
@@ -22,13 +22,17 @@ async function readData(): Promise<UserInterests> {
             return {
                 channels: [],
                 categories: [{ id: UNCATEGORIZED_ID, name: 'Channels', channelIds: [] }],
-                watchlist: []
+                watchlist: [],
+                musicList: []
             };
         }
 
         const res = data.content as UserInterests;
         if (!res.watchlist) {
             res.watchlist = [];
+        }
+        if (!res.musicList) {
+            res.musicList = [];
         }
         return res;
     } catch (error) {
@@ -37,7 +41,8 @@ async function readData(): Promise<UserInterests> {
         return {
             channels: [],
             categories: [{ id: UNCATEGORIZED_ID, name: 'Channels', channelIds: [] }],
-            watchlist: []
+            watchlist: [],
+            musicList: []
         };
     }
 }
@@ -250,5 +255,35 @@ export const updateWatchlistStatus = async (videoId: string, status: WatchlistSt
         await writeData(interests);
     }
 };
+
+// --- Music List Storage Functions ---
+
+export const getMusicListVideos = async (): Promise<MusicVideo[]> => {
+    const interests = await readData();
+    return interests.musicList || [];
+};
+
+export const addMusicVideo = async (video: MusicVideo): Promise<void> => {
+    const interests = await readData();
+    if (!interests.musicList) interests.musicList = [];
+
+    // Avoid duplicate additions; if already exists, move it to top
+    const existingIndex = interests.musicList.findIndex(v => v.id === video.id);
+    if (existingIndex !== -1) {
+        interests.musicList.splice(existingIndex, 1);
+    }
+
+    interests.musicList.unshift(video); // Prepend to top
+    await writeData(interests);
+};
+
+export const removeMusicVideo = async (videoId: string): Promise<void> => {
+    const interests = await readData();
+    if (!interests.musicList) return;
+
+    interests.musicList = interests.musicList.filter(v => v.id !== videoId);
+    await writeData(interests);
+};
+
 
 

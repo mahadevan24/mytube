@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Video } from '../lib/types';
 import Link from 'next/link';
-import { Clock, Bookmark, Check, Loader2, Play } from 'lucide-react';
-import { addVideoToWatchlistAction } from '../actions';
+import { Clock, Bookmark, Check, Loader2, Play, Music } from 'lucide-react';
+import { addVideoToWatchlistAction, addVideoToMusicAction } from '../actions';
 import { useToast } from './Toast';
 import { getWatchProgress, parseIsoDurationToSeconds, formatSecondsToTimestamp, WatchProgress } from '../lib/watchProgress';
 
@@ -56,6 +56,8 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
     const [mounted, setMounted] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isSavedMusic, setIsSavedMusic] = useState(false);
+    const [isSavingMusic, setIsSavingMusic] = useState(false);
     const [progress, setProgress] = useState<WatchProgress | null>(null);
     const { showToast } = useToast();
 
@@ -105,6 +107,25 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
         }
     };
 
+    const handleSaveToMusic = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isSavedMusic || isSavingMusic) return;
+
+        setIsSavingMusic(true);
+        try {
+            const res = await addVideoToMusicAction(video);
+            if (res.success) {
+                setIsSavedMusic(true);
+                showToast(`Saved "${video.title}" to Music List!`, 'success');
+            }
+        } catch {
+            showToast('Failed to save video to Music List.', 'error');
+        } finally {
+            setIsSavingMusic(false);
+        }
+    };
+
     const totalDurationSeconds = video.duration ? parseIsoDurationToSeconds(video.duration) : (progress?.duration || 0);
     const progressPercent = progress && totalDurationSeconds > 0
         ? Math.min(100, Math.max(0, (progress.seconds / totalDurationSeconds) * 100))
@@ -150,21 +171,38 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                     )}
                 </a>
 
-                {/* Save to Watchlist Quick Button */}
-                <button
-                    onClick={handleSaveToWatchlist}
-                    disabled={isSaving}
-                    className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-md z-20 ${isSaved ? 'bg-emerald-600 text-white opacity-100' : 'bg-black/60 hover:bg-indigo-600 text-white opacity-0 group-hover:opacity-100 hover:scale-110'}`}
-                    title={isSaved ? 'Saved to Watchlist' : 'Save to Watchlist'}
-                >
-                    {isSaving ? (
-                        <Loader2 size={14} className="animate-spin" />
-                    ) : isSaved ? (
-                        <Check size={14} />
-                    ) : (
-                        <Bookmark size={14} />
-                    )}
-                </button>
+                {/* Save Quick Action Buttons */}
+                <div className="absolute top-2 right-2 flex items-center gap-1.5 z-20">
+                    <button
+                        onClick={handleSaveToMusic}
+                        disabled={isSavingMusic}
+                        className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-md ${isSavedMusic ? 'bg-purple-600 text-white opacity-100' : 'bg-black/60 hover:bg-purple-600 text-white opacity-0 group-hover:opacity-100 hover:scale-110'}`}
+                        title={isSavedMusic ? 'Saved to Music List' : 'Save to Music List'}
+                    >
+                        {isSavingMusic ? (
+                            <Loader2 size={14} className="animate-spin" />
+                        ) : isSavedMusic ? (
+                            <Check size={14} />
+                        ) : (
+                            <Music size={14} />
+                        )}
+                    </button>
+
+                    <button
+                        onClick={handleSaveToWatchlist}
+                        disabled={isSaving}
+                        className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-md ${isSaved ? 'bg-emerald-600 text-white opacity-100' : 'bg-black/60 hover:bg-indigo-600 text-white opacity-0 group-hover:opacity-100 hover:scale-110'}`}
+                        title={isSaved ? 'Saved to Watchlist' : 'Save to Watchlist'}
+                    >
+                        {isSaving ? (
+                            <Loader2 size={14} className="animate-spin" />
+                        ) : isSaved ? (
+                            <Check size={14} />
+                        ) : (
+                            <Bookmark size={14} />
+                        )}
+                    </button>
+                </div>
             </div>
             <div className="flex flex-col gap-1 px-1">
                 <a

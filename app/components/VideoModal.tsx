@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ExternalLink, RotateCcw, Play } from 'lucide-react';
+import { X, ExternalLink, RotateCcw, Play, Repeat } from 'lucide-react';
 import { getWatchProgress, saveWatchProgress, clearWatchProgress, formatSecondsToTimestamp } from '../lib/watchProgress';
 
 interface VideoModalProps {
     videoId: string;
     onClose: () => void;
+    loop?: boolean;
 }
 
 declare global {
@@ -17,7 +18,7 @@ declare global {
     }
 }
 
-export default function VideoModal({ videoId, onClose }: VideoModalProps) {
+export default function VideoModal({ videoId, onClose, loop = false }: VideoModalProps) {
     const [mounted, setMounted] = useState(false);
     const [savedStartSeconds, setSavedStartSeconds] = useState<number>(0);
     const [currentSeconds, setCurrentSeconds] = useState<number>(0);
@@ -161,7 +162,8 @@ export default function VideoModal({ videoId, onClose }: VideoModalProps) {
     if (!mounted) return null;
 
     const startParam = !isPlayingFromStart && savedStartSeconds > 0 ? `&start=${savedStartSeconds}` : '';
-    const iframeSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1${startParam}`;
+    const loopParam = loop ? `&loop=1&playlist=${videoId}` : '';
+    const iframeSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1${startParam}${loopParam}`;
     const ytAppLink = `https://www.youtube.com/watch?v=${videoId}${currentSeconds > 0 ? `&t=${currentSeconds}s` : ''}`;
 
     return createPortal(
@@ -173,25 +175,31 @@ export default function VideoModal({ videoId, onClose }: VideoModalProps) {
 
                 {/* Control bar / header overlay */}
                 <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
-                    {/* Timestamp Resume Badge */}
-                    {!isPlayingFromStart && savedStartSeconds > 0 ? (
-                        <div className="pointer-events-auto flex items-center gap-2 bg-black/70 backdrop-blur-md border border-white/15 px-3 py-1.5 rounded-full text-xs text-white shadow-lg animate-in slide-in-from-top-2">
-                            <span className="flex items-center gap-1.5 font-medium text-emerald-400">
-                                <Play size={12} className="fill-emerald-400" />
-                                Resuming at {formatSecondsToTimestamp(savedStartSeconds)}
-                            </span>
-                            <button
-                                onClick={handleRestart}
-                                className="flex items-center gap-1 hover:bg-white/20 px-2 py-0.5 rounded-full text-[11px] text-neutral-300 transition-colors"
-                                title="Start video from beginning"
-                            >
-                                <RotateCcw size={12} />
-                                <span>Restart</span>
-                            </button>
-                        </div>
-                    ) : (
-                        <div />
-                    )}
+                    {/* Timestamp Resume & Loop Badges */}
+                    <div className="flex items-center gap-2">
+                        {loop && (
+                            <div className="pointer-events-auto flex items-center gap-1.5 bg-indigo-600/90 backdrop-blur-md border border-indigo-400/30 px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-lg animate-in slide-in-from-top-2">
+                                <Repeat size={14} className="animate-spin-slow" />
+                                <span>Repeat Mode Active</span>
+                            </div>
+                        )}
+                        {!isPlayingFromStart && savedStartSeconds > 0 ? (
+                            <div className="pointer-events-auto flex items-center gap-2 bg-black/70 backdrop-blur-md border border-white/15 px-3 py-1.5 rounded-full text-xs text-white shadow-lg animate-in slide-in-from-top-2">
+                                <span className="flex items-center gap-1.5 font-medium text-emerald-400">
+                                    <Play size={12} className="fill-emerald-400" />
+                                    Resuming at {formatSecondsToTimestamp(savedStartSeconds)}
+                                </span>
+                                <button
+                                    onClick={handleRestart}
+                                    className="flex items-center gap-1 hover:bg-white/20 px-2 py-0.5 rounded-full text-[11px] text-neutral-300 transition-colors"
+                                    title="Start video from beginning"
+                                >
+                                    <RotateCcw size={12} />
+                                    <span>Restart</span>
+                                </button>
+                            </div>
+                        ) : null}
+                    </div>
 
                     {/* Action buttons: Open in YouTube & Close */}
                     <div className="pointer-events-auto flex items-center gap-2">

@@ -29,9 +29,14 @@ export interface WatchlistVideo extends Video {
   notes?: string;
 }
 
+export interface MusicVideo extends Video {
+  addedAt: string; // ISO 8601 string
+}
+
 export interface UserInterests {
   channels: Channel[];
   categories: Category[];
   watchlist?: WatchlistVideo[];
+  musicList?: MusicVideo[];
 }
 
