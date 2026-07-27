@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Video } from '../lib/types';
 import Link from 'next/link';
-import { Clock, Bookmark, Check, Loader2 } from 'lucide-react';
+import { Clock, Bookmark, Check, Loader2, Play } from 'lucide-react';
 import { addVideoToWatchlistAction } from '../actions';
 import { useToast } from './Toast';
+import { getWatchProgress, parseIsoDurationToSeconds, formatSecondsToTimestamp, WatchProgress } from '../lib/watchProgress';
 
 function formatDuration(duration?: string) {
     if (!duration) return null;
@@ -55,11 +56,28 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
     const [mounted, setMounted] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [progress, setProgress] = useState<WatchProgress | null>(null);
     const { showToast } = useToast();
 
     useEffect(() => {
         setMounted(true);
-    }, []);
+
+        const loadProgress = () => {
+            const saved = getWatchProgress(video.id);
+            setProgress(saved);
+        };
+
+        loadProgress();
+
+        const handleProgressUpdate = () => {
+            loadProgress();
+        };
+
+        window.addEventListener('mytube-watch-progress-updated', handleProgressUpdate);
+        return () => {
+            window.removeEventListener('mytube-watch-progress-updated', handleProgressUpdate);
+        };
+    }, [video.id]);
 
     const handleClick = (e: React.MouseEvent) => {
         if (onPlay) {
@@ -87,12 +105,18 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
         }
     };
 
+    const totalDurationSeconds = video.duration ? parseIsoDurationToSeconds(video.duration) : (progress?.duration || 0);
+    const progressPercent = progress && totalDurationSeconds > 0
+        ? Math.min(100, Math.max(0, (progress.seconds / totalDurationSeconds) * 100))
+        : 0;
+
+    const ytExternalLink = `https://www.youtube.com/watch?v=${video.id}${progress?.seconds ? `&t=${progress.seconds}s` : ''}`;
 
     return (
         <div className="group flex flex-col gap-3">
             <div className="relative aspect-video rounded-xl overflow-hidden bg-neutral-200 dark:bg-neutral-900 shadow-sm dark:shadow-lg ring-1 ring-neutral-200 dark:ring-white/5 group-hover:ring-indigo-500/50 dark:group-hover:ring-indigo-500/30 transition-all duration-300">
                 <a
-                    href={`https://www.youtube.com/watch?v=${video.id}`}
+                    href={ytExternalLink}
                     target="_blank"
                     onClick={handleClick}
                     className="block w-full h-full cursor-pointer relative"
@@ -101,10 +125,28 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                     <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
 
+                    {/* Resume Timestamp Badge */}
+                    {mounted && progress && progress.seconds > 0 && (
+                        <span className="absolute bottom-2 left-2 bg-black/85 backdrop-blur-md text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-emerald-500/30 flex items-center gap-1 z-10">
+                            <Play size={10} className="fill-emerald-400" />
+                            Resume {formatSecondsToTimestamp(progress.seconds)}
+                        </span>
+                    )}
+
                     {video.duration && (
-                        <span className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-md text-white/90 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-white/10 tracking-wide">
+                        <span className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-md text-white/90 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-white/10 tracking-wide z-10">
                             {formatDuration(video.duration)}
                         </span>
+                    )}
+
+                    {/* Watch progress red bar at bottom of thumbnail */}
+                    {mounted && progress && progress.seconds > 0 && (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-neutral-800/80 z-20 overflow-hidden">
+                            <div
+                                className="h-full bg-red-600 transition-all duration-300"
+                                style={{ width: `${progressPercent > 0 ? progressPercent : 100}%` }}
+                            />
+                        </div>
                     )}
                 </a>
 
@@ -112,7 +154,7 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                 <button
                     onClick={handleSaveToWatchlist}
                     disabled={isSaving}
-                    className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-md ${isSaved ? 'bg-emerald-600 text-white opacity-100' : 'bg-black/60 hover:bg-indigo-600 text-white opacity-0 group-hover:opacity-100 hover:scale-110'}`}
+                    className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-md z-20 ${isSaved ? 'bg-emerald-600 text-white opacity-100' : 'bg-black/60 hover:bg-indigo-600 text-white opacity-0 group-hover:opacity-100 hover:scale-110'}`}
                     title={isSaved ? 'Saved to Watchlist' : 'Save to Watchlist'}
                 >
                     {isSaving ? (
@@ -126,7 +168,7 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
             </div>
             <div className="flex flex-col gap-1 px-1">
                 <a
-                    href={`https://www.youtube.com/watch?v=${video.id}`}
+                    href={ytExternalLink}
                     target="_blank"
                     onClick={handleClick}
                     className="text-neutral-900 dark:text-neutral-200 font-semibold text-sm line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-white transition-colors cursor-pointer"
@@ -151,4 +193,3 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
         </div>
     );
 }
-
