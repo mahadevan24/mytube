@@ -23,6 +23,7 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
     const [savedStartSeconds, setSavedStartSeconds] = useState<number>(0);
     const [currentSeconds, setCurrentSeconds] = useState<number>(0);
     const [isPlayingFromStart, setIsPlayingFromStart] = useState(false);
+    const [showResumeBadge, setShowResumeBadge] = useState(true);
     const playerRef = useRef<any>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -31,6 +32,11 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
     useEffect(() => {
         setMounted(true);
         document.body.style.overflow = 'hidden';
+
+        // Auto hide top resume badge after 5 seconds
+        const badgeTimer = setTimeout(() => {
+            setShowResumeBadge(false);
+        }, 5000);
 
         // Check if there is saved progress for this video
         const progress = getWatchProgress(videoId);
@@ -73,6 +79,7 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
         return () => {
             document.body.style.overflow = 'unset';
             window.removeEventListener('keydown', handleKeyDown);
+            clearTimeout(badgeTimer);
         };
     }, [videoId, onClose]);
 
@@ -195,7 +202,7 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6 md:p-10 animate-in fade-in duration-300"
             onClick={handleBackdropClick}
         >
-            <div ref={containerRef} className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 ring-1 ring-white/10 flex flex-col items-center justify-center">
+            <div ref={containerRef} className="group relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 ring-1 ring-white/10 flex flex-col items-center justify-center">
 
                 {/* Control bar / header overlay */}
                 <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
@@ -207,7 +214,7 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
                                 <span>Repeat Mode Active</span>
                             </div>
                         )}
-                        {!isPlayingFromStart && savedStartSeconds > 0 ? (
+                        {!isPlayingFromStart && savedStartSeconds > 0 && showResumeBadge ? (
                             <div className="pointer-events-auto flex items-center gap-2 bg-black/70 backdrop-blur-md border border-white/15 px-3 py-1.5 rounded-full text-xs text-white shadow-lg animate-in slide-in-from-top-2">
                                 <span className="flex items-center gap-1.5 font-medium text-white">
                                     <Play size={12} className="fill-white" />
@@ -226,7 +233,7 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
                     </div>
 
                     {/* Action buttons: Open in YouTube & Close */}
-                    <div className="pointer-events-auto flex items-center gap-2">
+                    <div className="pointer-events-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
                         <a
                             href={ytAppLink}
                             target="_blank"
