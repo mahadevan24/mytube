@@ -530,4 +530,82 @@ export async function getRecommendedMusicVideos(
     return await searchMusicVideos(fallbackQuery, 24);
 }
 
+// Search YouTube specifically for Elon Musk videos (talks, interviews, podcasts)
+export async function fetchElonMuskVideos(
+    filter: 'all' | 'talks' | 'interviews' | 'podcasts' = 'all',
+    searchQuery: string = '',
+    maxResults = 24
+): Promise<Video[]> {
+    const yt = getYoutubeClient();
+    try {
+        let q = 'Elon Musk';
+        if (searchQuery.trim()) {
+            q += ` ${searchQuery.trim()}`;
+        } else {
+            if (filter === 'talks') {
+                q += ' talk speech keynote';
+            } else if (filter === 'interviews') {
+                q += ' interview';
+            } else if (filter === 'podcasts') {
+                q += ' podcast';
+            } else {
+                q += ' talk interview podcast';
+            }
+        }
+
+        const response = await yt.search.list({
+            key: process.env.YOUTUBE_API_KEY,
+            part: ['snippet'],
+            q: q,
+            type: ['video'],
+            maxResults: maxResults,
+            order: 'date',
+        });
+
+        const items = response.data.items || [];
+        const videoIds = items.map((item: any) => item.id?.videoId).filter(Boolean);
+
+        if (videoIds.length === 0) {
+            return [];
+        }
+
+        const detailsMap = await getVideoDetails(videoIds);
+
+        const decodeEntities = (str: string) =>
+            str
+                .replace(/&amp;/g, '&')
+                .replace(/&#39;/g, "'")
+                .replace(/&quot;/g, '"')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>');
+
+        const videos: Video[] = items
+            .map((item: any) => {
+                const videoId = item.id?.videoId;
+                if (!videoId) return null;
+                const details = detailsMap.get(videoId);
+                const video: Video = {
+                    id: videoId,
+                    title: decodeEntities(item.snippet?.title || ''),
+                    thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
+                    channelTitle: item.snippet?.channelTitle || '',
+                    publishedAt: item.snippet?.publishedAt || '',
+                    channelId: item.snippet?.channelId || '',
+                    duration: details?.duration,
+                    viewCount: details?.viewCount,
+                };
+                return video;
+            })
+            .filter((v: Video | null): v is Video => v !== null && Boolean(v.id) && !isTooShort(v.duration));
+
+        videos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+        return videos;
+    } catch (error) {
+        console.error(`Error fetching Elon Musk videos (filter: ${filter}):`, error);
+        return [];
+    }
+}
+
+
 

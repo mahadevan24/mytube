@@ -1,6 +1,6 @@
 'use server';
 
-import { searchChannels, extractYouTubeVideoId, getSingleVideoDetails, searchMusicVideos, getRecommendedMusicVideos } from './lib/youtube';
+import { searchChannels, extractYouTubeVideoId, getSingleVideoDetails, searchMusicVideos, getRecommendedMusicVideos, fetchElonMuskVideos } from './lib/youtube';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import * as db from './lib/storage';
@@ -172,6 +172,16 @@ export async function getMusicRecommendationsAction(query?: string) {
     const interests = await db.getStoredInterests();
     return await getRecommendedMusicVideos(interests.channels, interests.musicList);
 }
+
+// --- Elon Musk Tab Actions ---
+
+export async function getElonMuskVideosAction(
+    filter: 'all' | 'talks' | 'interviews' | 'podcasts' = 'all',
+    searchQuery?: string
+) {
+    return await fetchElonMuskVideos(filter, searchQuery, 24);
+}
+
 
 
 

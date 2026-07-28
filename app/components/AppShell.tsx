@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, PanelLeftClose, PanelLeftOpen, Layers, ArrowUp, Tv, ListVideo, Music } from 'lucide-react';
+import { Menu, X, PanelLeftClose, PanelLeftOpen, Layers, ArrowUp, Tv, ListVideo, Music, Rocket } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -150,6 +150,13 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                     >
                         <Music size={18} />
                     </Link>
+                    <Link
+                        href="/elon"
+                        className={`p-2 rounded-lg transition-colors ${pathname === '/elon' ? 'text-neutral-900 dark:text-white font-bold bg-neutral-100 dark:bg-white/10' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'}`}
+                        title="Elon Musk"
+                    >
+                        <Rocket size={18} />
+                    </Link>
                     {themeToggle}
                 </div>
             </header>
@@ -240,6 +247,13 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                                 >
                                     <Music size={14} />
                                     <span>Music List</span>
+                                </Link>
+                                <Link
+                                    href="/elon"
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${pathname === '/elon' ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10'}`}
+                                >
+                                    <Rocket size={14} />
+                                    <span>Elon Musk</span>
                                 </Link>
                             </nav>
 
