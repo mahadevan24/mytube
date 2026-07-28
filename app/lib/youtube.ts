@@ -63,6 +63,32 @@ async function getVideoDetails(videoIds: string[]): Promise<Map<string, { durati
     }
 }
 
+// Fetch subscriber count for a list of channel IDs
+async function getChannelsSubscriberCounts(channelIds: string[]): Promise<Map<string, number>> {
+    if (channelIds.length === 0) return new Map();
+    const yt = getYoutubeClient();
+    try {
+        const uniqueIds = Array.from(new Set(channelIds));
+        const response = await yt.channels.list({
+            key: process.env.YOUTUBE_API_KEY,
+            part: ['statistics'],
+            id: uniqueIds,
+        });
+
+        const subscriberMap = new Map<string, number>();
+        (response.data.items || []).forEach((item: any) => {
+            if (item.id && item.statistics) {
+                const count = parseInt(item.statistics.subscriberCount || '0', 10);
+                subscriberMap.set(item.id, isNaN(count) ? 0 : count);
+            }
+        });
+        return subscriberMap;
+    } catch (error) {
+        console.error('Error fetching channel subscriber counts:', error);
+        return new Map();
+    }
+}
+
 // Helper to check if duration is too short (< 5 mins)
 function isTooShort(durationIso?: string): boolean {
     if (!durationIso) return false; // Assume long form if unknown
@@ -534,7 +560,8 @@ export async function getRecommendedMusicVideos(
 export async function fetchElonMuskVideos(
     filter: 'all' | 'talks' | 'interviews' | 'podcasts' = 'all',
     searchQuery: string = '',
-    maxResults = 24
+    maxResults = 24,
+    minSubscribers = 50000
 ): Promise<Video[]> {
     const yt = getYoutubeClient();
     try {
@@ -553,17 +580,35 @@ export async function fetchElonMuskVideos(
             }
         }
 
+        // Fetch larger batch of search results (up to 50) to allow filtering by subscriber count
+        const fetchLimit = Math.min(maxResults * 2, 50);
+
         const response = await yt.search.list({
             key: process.env.YOUTUBE_API_KEY,
             part: ['snippet'],
             q: q,
             type: ['video'],
-            maxResults: maxResults,
+            maxResults: fetchLimit,
             order: 'date',
         });
 
         const items = response.data.items || [];
-        const videoIds = items.map((item: any) => item.id?.videoId).filter(Boolean);
+        if (items.length === 0) {
+            return [];
+        }
+
+        // Extract channel IDs and check subscriber counts to filter channels with < minSubscribers
+        const channelIds = items.map((item: any) => item.snippet?.channelId).filter(Boolean);
+        const subCountsMap = await getChannelsSubscriberCounts(channelIds);
+
+        const filteredItems = items.filter((item: any) => {
+            const chId = item.snippet?.channelId;
+            if (!chId) return false;
+            const subCount = subCountsMap.get(chId) ?? 0;
+            return subCount >= minSubscribers;
+        });
+
+        const videoIds = filteredItems.map((item: any) => item.id?.videoId).filter(Boolean);
 
         if (videoIds.length === 0) {
             return [];
@@ -579,7 +624,7 @@ export async function fetchElonMuskVideos(
                 .replace(/&lt;/g, '<')
                 .replace(/&gt;/g, '>');
 
-        const videos: Video[] = items
+        const videos: Video[] = filteredItems
             .map((item: any) => {
                 const videoId = item.id?.videoId;
                 if (!videoId) return null;
@@ -600,7 +645,7 @@ export async function fetchElonMuskVideos(
 
         videos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
-        return videos;
+        return videos.slice(0, maxResults);
     } catch (error) {
         console.error(`Error fetching Elon Musk videos (filter: ${filter}):`, error);
         return [];
