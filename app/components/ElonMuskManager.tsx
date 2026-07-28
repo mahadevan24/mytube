@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Video } from '../lib/types';
 import VideoCard from './VideoCard';
 import VideoModal from './VideoModal';
@@ -20,6 +20,16 @@ export default function ElonMuskManager({ initialVideos }: ElonMuskManagerProps)
     const [activeSearchTerm, setActiveSearchTerm] = useState('');
     const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
+
+    // Automatically refresh videos whenever the tab is opened
+    useEffect(() => {
+        startTransition(async () => {
+            const fetched = await getElonMuskVideosAction('all', '');
+            if (fetched && fetched.length > 0) {
+                setVideos(fetched);
+            }
+        });
+    }, []);
 
     const handleFilterChange = (filter: ElonFilter) => {
         setActiveFilter(filter);
@@ -44,9 +54,16 @@ export default function ElonMuskManager({ initialVideos }: ElonMuskManagerProps)
         });
     };
 
+    const handleRefresh = () => {
+        startTransition(async () => {
+            const fetched = await getElonMuskVideosAction(activeFilter, activeSearchTerm);
+            setVideos(fetched);
+        });
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-12">
-            {/* Controls Bar: Filters & Search */}
+            {/* Controls Bar: Filters, Search & Refresh */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-neutral-200 dark:border-white/10 pb-4">
                 {/* Filter Tabs */}
                 <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
@@ -75,33 +92,45 @@ export default function ElonMuskManager({ initialVideos }: ElonMuskManagerProps)
                     })}
                 </div>
 
-                {/* Sub-search input */}
-                <form onSubmit={handleSearchSubmit} className="relative sm:w-72">
-                    <input
-                        type="text"
-                        placeholder="Filter Elon talks..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-8 py-2 bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-white placeholder-neutral-500 rounded-xl text-xs border border-neutral-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all"
-                    />
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                    {searchQuery && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setSearchQuery('');
-                                setActiveSearchTerm('');
-                                startTransition(async () => {
-                                    const fetched = await getElonMuskVideosAction(activeFilter, '');
-                                    setVideos(fetched);
-                                });
-                            }}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-white"
-                        >
-                            ×
-                        </button>
-                    )}
-                </form>
+                {/* Search & Refresh */}
+                <div className="flex items-center gap-2">
+                    <form onSubmit={handleSearchSubmit} className="relative sm:w-72 flex-1 sm:flex-initial">
+                        <input
+                            type="text"
+                            placeholder="Filter Elon talks..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-8 py-2 bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-white placeholder-neutral-500 rounded-xl text-xs border border-neutral-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all"
+                        />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    setActiveSearchTerm('');
+                                    startTransition(async () => {
+                                        const fetched = await getElonMuskVideosAction(activeFilter, '');
+                                        setVideos(fetched);
+                                    });
+                                }}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-white"
+                            >
+                                ×
+                            </button>
+                        )}
+                    </form>
+
+                    <button
+                        onClick={handleRefresh}
+                        disabled={isPending}
+                        title="Refresh feed"
+                        className="px-3 py-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-neutral-200 dark:border-neutral-800 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                    >
+                        <RefreshCw size={14} className={isPending ? 'animate-spin text-red-500' : ''} />
+                        <span className="hidden sm:inline">Refresh</span>
+                    </button>
+                </div>
             </div>
 
             {/* Loading Overlay State */}
