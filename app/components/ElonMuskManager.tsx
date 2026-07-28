@@ -5,7 +5,7 @@ import { Video } from '../lib/types';
 import VideoCard from './VideoCard';
 import VideoModal from './VideoModal';
 import { getElonMuskVideosAction } from '../actions';
-import { Search, Sparkles, Rocket, Mic, Tv, Flame, RefreshCw, Cpu, Globe } from 'lucide-react';
+import { Search, Mic, Tv, Flame, RefreshCw, Cpu, Globe } from 'lucide-react';
 
 interface ElonMuskManagerProps {
     initialVideos: Video[];
@@ -44,90 +44,8 @@ export default function ElonMuskManager({ initialVideos }: ElonMuskManagerProps)
         });
     };
 
-    const handleQuickTopic = (topic: string) => {
-        setSearchQuery(topic);
-        setActiveSearchTerm(topic);
-        startTransition(async () => {
-            const fetched = await getElonMuskVideosAction(activeFilter, topic);
-            setVideos(fetched);
-        });
-    };
-
-    const handleRefresh = () => {
-        startTransition(async () => {
-            const fetched = await getElonMuskVideosAction(activeFilter, activeSearchTerm);
-            setVideos(fetched);
-        });
-    };
-
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-12">
-            {/* Elon Musk HQ Header Banner */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-neutral-900 via-neutral-950 to-black p-6 md:p-8 border border-neutral-800 text-white shadow-2xl">
-                <div className="absolute -right-12 -top-12 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
-
-                <div className="relative z-10 space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 bg-red-600/20 text-red-500 border border-red-500/30 rounded-2xl shadow-inner">
-                                <Rocket size={28} className="animate-pulse" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs uppercase tracking-widest text-red-400 font-semibold px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20">
-                                        Special Edition Tab
-                                    </span>
-                                </div>
-                                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mt-1 bg-gradient-to-r from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent">
-                                    Elon Musk Vault
-                                </h1>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={handleRefresh}
-                            disabled={isPending}
-                            className="px-4 py-2 bg-neutral-800/80 hover:bg-neutral-700 text-neutral-300 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-2 border border-white/10 transition-all shadow-sm active:scale-95 disabled:opacity-50"
-                        >
-                            <RefreshCw size={14} className={isPending ? 'animate-spin' : ''} />
-                            <span>Refresh Vault</span>
-                        </button>
-                    </div>
-
-                    <p className="text-sm text-neutral-400 max-w-2xl leading-relaxed">
-                        Curated recent keynotes, deep-dive interviews, and podcast appearances by Elon Musk across SpaceX, Tesla, xAI, Neuralink, and X.
-                    </p>
-
-                    {/* Preset Topic Tags */}
-                    <div className="flex flex-wrap items-center gap-2 pt-2">
-                        <span className="text-xs font-medium text-neutral-500 flex items-center gap-1 mr-1">
-                            <Sparkles size={12} className="text-amber-400" /> Topics:
-                        </span>
-                        {[
-                            { name: 'SpaceX & Starship', topic: 'SpaceX Starship Mars' },
-                            { name: 'xAI & Grok', topic: 'xAI Grok AI' },
-                            { name: 'Tesla & FSD', topic: 'Tesla FSD Robotaxi' },
-                            { name: 'Lex Fridman', topic: 'Lex Fridman' },
-                            { name: 'Joe Rogan', topic: 'Joe Rogan' },
-                            { name: 'Neuralink', topic: 'Neuralink brain' },
-                        ].map((t) => (
-                            <button
-                                key={t.name}
-                                onClick={() => handleQuickTopic(t.topic)}
-                                className={`text-xs px-3 py-1 rounded-full transition-all border ${
-                                    activeSearchTerm === t.topic
-                                        ? 'bg-red-600 text-white border-red-500 shadow-md font-semibold'
-                                        : 'bg-neutral-900/80 text-neutral-300 border-neutral-700 hover:border-neutral-500 hover:bg-neutral-800'
-                                }`}
-                            >
-                                {t.name}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
             {/* Controls Bar: Filters & Search */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-neutral-200 dark:border-white/10 pb-4">
                 {/* Filter Tabs */}
