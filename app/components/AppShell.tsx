@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, PanelLeftClose, PanelLeftOpen, Layers, ArrowUp, Tv, ListVideo, Music, Rocket } from 'lucide-react';
+import { Menu, X, PanelLeftClose, PanelLeftOpen, Layers, ArrowUp, Tv, ListVideo, Music, Rocket, LogOut } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { logout } from '../actions';
 
 
 interface AppShellProps {
@@ -260,6 +261,14 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                         </div>
                         <div className="flex items-center gap-2">
                             {themeToggle}
+                            <button
+                                onClick={() => logout()}
+                                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+                                title="Log Out"
+                            >
+                                <LogOut size={15} />
+                                <span className="hidden sm:inline">Logout</span>
+                            </button>
                         </div>
                     </header>
                 )}

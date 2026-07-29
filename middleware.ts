@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
 
     // Public paths that don't require authentication
-    const publicPaths = ['/login', '/favicon.ico']
+    const publicPaths = ['/login', '/onboard', '/favicon.ico']
 
     // Check if the current path is public or a static asset
     if (publicPaths.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/static')) {

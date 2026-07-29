@@ -1,26 +1,34 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { google } from 'googleapis';
 import { Video, Channel, MusicVideo } from './types';
+import { getCurrentUser } from './auth';
 
 const youtube = google.youtube('v3');
 
-// Initialize with API Key from environment variables
-const getYoutubeClient = () => {
-    const apiKey = process.env.YOUTUBE_API_KEY;
-    if (!apiKey) {
-        console.error('YOUTUBE_API_KEY is missing');
-        // In a real app, you might want to throw an error or handle this more gracefully
-        // depending on where this is called.
+async function getApiKey(): Promise<string | undefined> {
+    try {
+        const user = await getCurrentUser();
+        if (user?.youtubeApiKey && user.youtubeApiKey.trim()) {
+            return user.youtubeApiKey.trim();
+        }
+    } catch {
+        // Fallback if executed outside request scope
     }
+    return process.env.YOUTUBE_API_KEY;
+}
+
+// Initialize YouTube Client
+const getYoutubeClient = () => {
     return youtube;
 };
 
 // Helper: Get Uploads Playlist ID for a Channel
 async function getUploadsPlaylistId(channelId: string): Promise<string | null> {
     const yt = getYoutubeClient();
+    const apiKey = await getApiKey();
     try {
         const response = await yt.channels.list({
-            key: process.env.YOUTUBE_API_KEY,
+            key: apiKey,
             part: ['contentDetails'],
             id: [channelId],
         });
@@ -40,9 +48,10 @@ async function getUploadsPlaylistId(channelId: string): Promise<string | null> {
 async function getVideoDetails(videoIds: string[]): Promise<Map<string, { duration: string; viewCount?: string }>> {
     if (videoIds.length === 0) return new Map();
     const yt = getYoutubeClient();
+    const apiKey = await getApiKey();
     try {
         const response = await yt.videos.list({
-            key: process.env.YOUTUBE_API_KEY,
+            key: apiKey,
             part: ['contentDetails', 'statistics'],
             id: videoIds,
         });
@@ -67,10 +76,11 @@ async function getVideoDetails(videoIds: string[]): Promise<Map<string, { durati
 async function getChannelsSubscriberCounts(channelIds: string[]): Promise<Map<string, number>> {
     if (channelIds.length === 0) return new Map();
     const yt = getYoutubeClient();
+    const apiKey = await getApiKey();
     try {
         const uniqueIds = Array.from(new Set(channelIds));
         const response = await yt.channels.list({
-            key: process.env.YOUTUBE_API_KEY,
+            key: apiKey,
             part: ['statistics'],
             id: uniqueIds,
         });
@@ -91,7 +101,7 @@ async function getChannelsSubscriberCounts(channelIds: string[]): Promise<Map<st
 
 // Helper to check if duration is too short (< 5 mins)
 function isTooShort(durationIso?: string): boolean {
-    if (!durationIso) return false; // Assume long form if unknown
+    if (!durationIso) return false;
     const matches = durationIso.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
     if (!matches) return false;
 
@@ -100,11 +110,9 @@ function isTooShort(durationIso?: string): boolean {
     const seconds = parseInt(matches[3]?.replace('S', '') || '0', 10);
 
     const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-    return totalSeconds < 300; // Filter out videos shorter than 5 minutes
+    return totalSeconds < 300;
 }
 
-
-// Fetch videos from a channel's uploads playlist with pagination support
 export interface ChannelVideosResponse {
     videos: Video[];
     nextPageToken?: string;
@@ -117,6 +125,7 @@ export async function getChannelVideos(
     pageToken?: string
 ): Promise<ChannelVideosResponse> {
     const yt = getYoutubeClient();
+    const apiKey = await getApiKey();
     const uploadsPlaylistId = await getUploadsPlaylistId(channelId);
 
     if (!uploadsPlaylistId) {
@@ -124,11 +133,10 @@ export async function getChannelVideos(
     }
 
     try {
-        // Fetch more items than requested to account for filtering
         const fetchLimit = Math.max(maxResults * 4, 50);
 
         const response = await yt.playlistItems.list({
-            key: process.env.YOUTUBE_API_KEY,
+            key: apiKey,
             part: ['snippet', 'contentDetails'],
             playlistId: uploadsPlaylistId,
             maxResults: fetchLimit,
@@ -139,7 +147,6 @@ export async function getChannelVideos(
         const nextPageToken = response.data.nextPageToken;
         const videoIds = items.map((item: any) => item.contentDetails?.videoId).filter(Boolean);
 
-        // Fetch details (duration)
         const detailsMap = await getVideoDetails(videoIds);
 
         const videos: Video[] = items
@@ -157,7 +164,6 @@ export async function getChannelVideos(
                     viewCount: details?.viewCount,
                 };
             })
-            // Filter out empty IDs and short videos (< 5m)
             .filter((v: Video) => v.id && !isTooShort(v.duration));
 
         return {
@@ -171,7 +177,6 @@ export async function getChannelVideos(
     }
 }
 
-// Legacy function for backward compatibility
 export async function getChannelVideosLegacy(channelId: string, maxResults = 10): Promise<Video[]> {
     const result = await getChannelVideos(channelId, maxResults);
     return result.videos;
@@ -179,7 +184,7 @@ export async function getChannelVideosLegacy(channelId: string, maxResults = 10)
 
 export interface PersonalizedFeedResponse {
     videos: Video[];
-    channelTokens: Record<string, string | undefined>; // channelId -> nextPageToken
+    channelTokens: Record<string, string | undefined>;
     hasMore: boolean;
 }
 
@@ -192,7 +197,6 @@ export async function getPersonalizedFeed(
         return { videos: [], channelTokens: {}, hasMore: false };
     }
 
-    // Fetch videos from each channel with pagination
     const channelPromises = channels.map(async (c) => {
         const pageToken = channelTokens?.[c.id];
         const result = await getChannelVideos(c.id, maxResultsPerChannel, pageToken);
@@ -206,10 +210,6 @@ export async function getPersonalizedFeed(
 
     const channelResults = await Promise.all(channelPromises);
 
-    // Interleave videos round-by-round across channels:
-    // Round 0: 1st (latest) video from each channel, sorted among themselves by publishedAt desc
-    // Round 1: 2nd latest video from each channel, sorted among themselves by publishedAt desc
-    // etc.
     const channelVideoLists = channelResults.map((r) => r.videos);
     const maxLen = Math.max(0, ...channelVideoLists.map((list) => list.length));
 
@@ -221,12 +221,10 @@ export async function getPersonalizedFeed(
                 roundVideos.push(list[i]);
             }
         }
-        // Sort videos within this round by publishedAt descending (newest first)
         roundVideos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
         interleavedVideos.push(...roundVideos);
     }
 
-    // Remove duplicates (by video ID), preserving round-robin order
     const seenIds = new Set<string>();
     const sortedVideos: Video[] = [];
     for (const v of interleavedVideos) {
@@ -236,7 +234,6 @@ export async function getPersonalizedFeed(
         }
     }
 
-    // Build channel tokens map
     const newChannelTokens: Record<string, string | undefined> = {};
     channelResults.forEach((r) => {
         newChannelTokens[r.channelId] = r.nextPageToken;
@@ -251,18 +248,17 @@ export async function getPersonalizedFeed(
     };
 }
 
-// Legacy function for backward compatibility
 export async function getPersonalizedFeedLegacy(channels: Channel[]): Promise<Video[]> {
     const result = await getPersonalizedFeed(channels, 5);
     return result.videos;
 }
 
-// Helper to search channels (for adding interests)
 export async function searchChannels(query: string): Promise<Channel[]> {
     const yt = getYoutubeClient();
+    const apiKey = await getApiKey();
     try {
         const response = await yt.search.list({
-            key: process.env.YOUTUBE_API_KEY,
+            key: apiKey,
             part: ['snippet'],
             q: query,
             type: ['channel'],
@@ -280,7 +276,6 @@ export async function searchChannels(query: string): Promise<Channel[]> {
     }
 }
 
-// Search videos belonging specifically to a set of channels matching a query
 export async function searchCategoryVideos(
     channels: Channel[],
     query: string,
@@ -291,11 +286,12 @@ export async function searchCategoryVideos(
     }
 
     const yt = getYoutubeClient();
+    const apiKey = await getApiKey();
     try {
         const searchPromises = channels.map(async (ch) => {
             try {
                 const response = await yt.search.list({
-                    key: process.env.YOUTUBE_API_KEY,
+                    key: apiKey,
                     part: ['snippet'],
                     q: query,
                     channelId: ch.id,
@@ -348,7 +344,6 @@ export async function searchCategoryVideos(
             }
         }
 
-        // Filter short videos < 5m and remove duplicates
         const seenIds = new Set<string>();
         const filteredVideos: Video[] = [];
         for (const v of allVideos) {
@@ -358,7 +353,6 @@ export async function searchCategoryVideos(
             }
         }
 
-        // Sort by publishedAt desc
         filteredVideos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
         return { videos: filteredVideos, hasMore: false };
@@ -368,18 +362,14 @@ export async function searchCategoryVideos(
     }
 }
 
-
-// Extract 11-character YouTube video ID from various URL patterns or direct ID input
 export function extractYouTubeVideoId(input: string): string | null {
     if (!input) return null;
     const trimmed = input.trim();
 
-    // 1. Direct ID check (11 characters like dQw4w9WgXcQ)
     if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
         return trimmed;
     }
 
-    // 2. Standard URL regex patterns
     const patterns = [
         /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
         /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
@@ -395,7 +385,6 @@ export function extractYouTubeVideoId(input: string): string | null {
         }
     }
 
-    // 3. Fallback: URL search parameter 'v' extraction
     try {
         const urlString = trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
         const url = new URL(urlString);
@@ -410,12 +399,12 @@ export function extractYouTubeVideoId(input: string): string | null {
     return null;
 }
 
-// Fetch single video details by video ID using YouTube Data API
 export async function getSingleVideoDetails(videoId: string): Promise<Video | null> {
     const yt = getYoutubeClient();
+    const apiKey = await getApiKey();
     try {
         const response = await yt.videos.list({
-            key: process.env.YOUTUBE_API_KEY,
+            key: apiKey,
             part: ['snippet', 'contentDetails', 'statistics'],
             id: [videoId],
         });
@@ -444,19 +433,19 @@ export async function getSingleVideoDetails(videoId: string): Promise<Video | nu
     }
 }
 
-// Search YouTube specifically for music videos (videoCategoryId = 10)
 export async function searchMusicVideos(
     query: string = 'lofi ambient focus music',
     maxResults = 24
 ): Promise<Video[]> {
     const yt = getYoutubeClient();
+    const apiKey = await getApiKey();
     try {
         const response = await yt.search.list({
-            key: process.env.YOUTUBE_API_KEY,
+            key: apiKey,
             part: ['snippet'],
             q: query,
             type: ['video'],
-            videoCategoryId: '10', // Category 10 = Music
+            videoCategoryId: '10',
             maxResults: maxResults,
         });
 
@@ -502,12 +491,10 @@ export async function searchMusicVideos(
     }
 }
 
-// Generate music recommendations based on user's saved musicList first, then fallback to Korean/KDrama/K-pop music
 export async function getRecommendedMusicVideos(
     channels: Channel[] = [],
     musicList: MusicVideo[] = []
 ): Promise<Video[]> {
-    // 1. Check saved musicList for artist/channel names first
     if (musicList && musicList.length > 0) {
         const uniqueArtists: string[] = [];
         const seen = new Set<string>();
@@ -522,7 +509,6 @@ export async function getRecommendedMusicVideos(
         }
 
         if (uniqueArtists.length > 0) {
-            // Query artists individually to get focused recommendations
             const artistPromises = uniqueArtists.map(artist =>
                 searchMusicVideos(`${artist} music`, 10)
             );
@@ -551,12 +537,10 @@ export async function getRecommendedMusicVideos(
         }
     }
 
-    // 2. Fallback to Korean, K-drama, K-pop music
     const fallbackQuery = 'korean ost kdrama kpop music';
     return await searchMusicVideos(fallbackQuery, 24);
 }
 
-// Search YouTube specifically for Elon Musk videos (talks, interviews, podcasts)
 export async function fetchElonMuskVideos(
     filter: 'all' | 'talks' | 'interviews' | 'podcasts' = 'all',
     searchQuery: string = '',
@@ -564,6 +548,7 @@ export async function fetchElonMuskVideos(
     minSubscribers = 50000
 ): Promise<Video[]> {
     const yt = getYoutubeClient();
+    const apiKey = await getApiKey();
     try {
         let q = 'Elon Musk';
         if (searchQuery.trim()) {
@@ -580,11 +565,10 @@ export async function fetchElonMuskVideos(
             }
         }
 
-        // Fetch larger batch of search results (up to 50) to allow filtering by subscriber count
         const fetchLimit = Math.min(maxResults * 2, 50);
 
         const response = await yt.search.list({
-            key: process.env.YOUTUBE_API_KEY,
+            key: apiKey,
             part: ['snippet'],
             q: q,
             type: ['video'],
@@ -597,7 +581,6 @@ export async function fetchElonMuskVideos(
             return [];
         }
 
-        // Extract channel IDs and check subscriber counts to filter channels with < minSubscribers
         const channelIds = items.map((item: any) => item.snippet?.channelId).filter(Boolean);
         const subCountsMap = await getChannelsSubscriberCounts(channelIds);
 
@@ -651,6 +634,3 @@ export async function fetchElonMuskVideos(
         return [];
     }
 }
-
-
-

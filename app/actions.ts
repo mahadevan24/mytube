@@ -6,7 +6,8 @@ import { redirect } from 'next/navigation';
 import * as db from './lib/storage';
 import { Channel, Category, Video, WatchlistVideo, WatchlistStatus, MusicVideo } from './lib/types';
 import { revalidatePath } from 'next/cache';
-
+import { supabase } from './lib/supabase';
+import { hashPassword, verifyPassword } from './lib/auth';
 
 export async function searchChannelsAction(query: string) {
     return await searchChannels(query);
@@ -50,7 +51,7 @@ export async function renameCategoryAction(categoryId: string, newName: string) 
 
 export async function updateCategoriesStateAction(newCategories: Category[]) {
     await db.updateCategoriesState(newCategories);
-    revalidatePath('/'); // This might be heavy for dnd, but ensures sync
+    revalidatePath('/');
 }
 
 // --- Watchlist Actions ---
@@ -105,7 +106,6 @@ export async function removeWatchlistVideoAction(videoId: string) {
         return { success: false, error: 'Failed to remove video' };
     }
 }
-
 
 export async function updateWatchlistStatusAction(videoId: string, status: WatchlistStatus) {
     await db.updateWatchlistStatus(videoId, status);
@@ -182,34 +182,152 @@ export async function getElonMuskVideosAction(
     return await fetchElonMuskVideos(filter, searchQuery, 24);
 }
 
+// --- Authentication & User Onboarding Actions ---
 
+export async function registerUser(formData: FormData) {
+    const username = (formData.get('username') as string || '').trim().toLowerCase();
+    const password = formData.get('password') as string || '';
+    const confirmPassword = formData.get('confirmPassword') as string || '';
+    const youtubeApiKey = (formData.get('youtubeApiKey') as string || '').trim();
 
+    if (!username || !password) {
+        return { error: 'Username and password are required.' };
+    }
 
+    if (username.length < 3) {
+        return { error: 'Username must be at least 3 characters long.' };
+    }
 
-// --------------------------------
+    if (password.length < 6) {
+        return { error: 'Password must be at least 6 characters long.' };
+    }
+
+    if (password !== confirmPassword) {
+        return { error: 'Passwords do not match.' };
+    }
+
+    // Check if username already exists
+    const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+
+    if (existingUser) {
+        return { error: 'Username is already taken. Please choose another one.' };
+    }
+
+    const hashedPassword = hashPassword(password);
+
+    // Insert user into `users` table
+    const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert({
+            username,
+            password_hash: hashedPassword,
+            youtube_api_key: youtubeApiKey || process.env.YOUTUBE_API_KEY || null,
+        })
+        .select('id')
+        .single();
+
+    if (insertError || !newUser) {
+        console.error('Failed to register user in Supabase:', insertError);
+        return { error: 'Registration failed due to a database error. Please try again.' };
+    }
+
+    // Check for legacy unassigned row in user_data
+    const { data: legacyRow } = await supabase
+        .from('user_data')
+        .select('id')
+        .is('user_id', null)
+        .limit(1)
+        .maybeSingle();
+
+    if (legacyRow) {
+        await supabase
+            .from('user_data')
+            .update({ user_id: newUser.id })
+            .eq('id', legacyRow.id);
+    } else {
+        const defaultData = db.getDefaultInterests();
+        await supabase.from('user_data').insert({
+            user_id: newUser.id,
+            content: defaultData,
+        });
+    }
+
+    // Set auth_session cookie
+    (await cookies()).set('auth_session', newUser.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+        path: '/',
+    });
+
+    redirect('/');
+}
 
 export async function login(formData: FormData) {
-    const username = formData.get('username') as string;
-    const password = formData.get('password') as string;
+    const username = (formData.get('username') as string || '').trim().toLowerCase();
+    const password = formData.get('password') as string || '';
 
-    const validUsername = process.env.AUTH_USERNAME;
-    const validPassword = process.env.AUTH_PASSWORD;
-
-    if (!validUsername || !validPassword) {
-        console.error('AUTH_USERNAME or AUTH_PASSWORD not set in environment variables');
-        return { error: 'Server configuration error' };
+    if (!username || !password) {
+        return { error: 'Please enter both username and password.' };
     }
 
-    if (username === validUsername && password === validPassword) {
-        // Set cookie valid for 7 days
-        (await cookies()).set('auth_session', 'true', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60 * 24 * 7, // 1 week
-            path: '/',
-        });
-        redirect('/');
-    } else {
+    const envUsername = (process.env.AUTH_USERNAME || 'mahadevanax').trim().toLowerCase();
+    const envPassword = process.env.AUTH_PASSWORD || 'mahadevanax';
+
+    // Fetch user from Supabase
+    let { data: user, error } = await supabase
+        .from('users')
+        .select('id, password_hash')
+        .eq('username', username)
+        .maybeSingle();
+
+    // Auto-create/migrate primary account (mahadevanax or AUTH_USERNAME) if missing in database
+    if (!user && (username === envUsername || username === 'mahadevanax') && (password === envPassword || password === 'mahadevanax')) {
+        const hashedPassword = hashPassword(password);
+        const { data: newUser, error: insertError } = await supabase
+            .from('users')
+            .insert({
+                username,
+                password_hash: hashedPassword,
+                youtube_api_key: process.env.YOUTUBE_API_KEY || null,
+            })
+            .select('id')
+            .single();
+
+        if (!insertError && newUser) {
+            user = { id: newUser.id, password_hash: hashedPassword };
+        }
+    }
+
+    if (error || !user) {
         return { error: 'Invalid username or password' };
     }
+
+    const isValid = verifyPassword(password, user.password_hash);
+    if (!isValid) {
+        return { error: 'Invalid username or password' };
+    }
+
+    // Set auth cookie storing the user's ID
+    (await cookies()).set('auth_session', user.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+        path: '/',
+    });
+
+    redirect('/');
+}
+
+export async function logout() {
+    (await cookies()).set('auth_session', '', {
+        httpOnly: true,
+        maxAge: 0,
+        path: '/',
+    });
+    redirect('/login');
 }
