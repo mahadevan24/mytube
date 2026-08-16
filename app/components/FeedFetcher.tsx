@@ -5,6 +5,7 @@ import { getStoredInterests } from '../lib/storage';
 import InfiniteVideoFeed from './InfiniteVideoFeed';
 import CategoryTabs from './CategoryTabs';
 import TabVideoSearch from './TabVideoSearch';
+import { ABUNDANCE_CHANNEL, ABUNDANCE_FEED_ID } from '../lib/curatedFeeds';
 
 interface FeedFetcherProps {
     searchParams: { [key: string]: string | string[] | undefined };
@@ -14,6 +15,7 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
     const channelIdFilter = searchParams.channelId as string | undefined;
     let categoryIdFilter = searchParams.categoryId as string | undefined;
     const searchQuery = searchParams.q as string | undefined;
+    const isAbundanceFeed = categoryIdFilter === ABUNDANCE_FEED_ID;
 
     // Fetch initial interests from server-side storage
     const interests: UserInterests = await getStoredInterests();
@@ -39,7 +41,10 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
     let scopeName = "Home Feed";
     let scopeChannels: Channel[] = interests.channels;
 
-    if (channelIdFilter) {
+    if (isAbundanceFeed) {
+        scopeName = ABUNDANCE_CHANNEL.title;
+        scopeChannels = [ABUNDANCE_CHANNEL];
+    } else if (channelIdFilter) {
         const ch = interests.channels.find(c => c.id === channelIdFilter);
         scopeName = ch ? ch.title : "Channel";
         scopeChannels = ch ? [ch] : [{ id: channelIdFilter, title: 'Channel' }];
@@ -52,13 +57,20 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
         scopeChannels = interests.channels;
     }
 
-    if (hasInterests) {
+    if (hasInterests || isAbundanceFeed) {
         if (searchQuery && searchQuery.trim()) {
             // Search Mode: Query YouTube API filtered by channels in current tab scope
             feedTitle = `Search results for "${searchQuery}" in ${scopeName}`;
             const searchResult = await searchCategoryVideos(scopeChannels, searchQuery);
             initialVideos = searchResult.videos;
             initialPageToken = undefined;
+        } else if (isAbundanceFeed) {
+            feedTitle = `Videos from ${ABUNDANCE_CHANNEL.title}`;
+            feedType = 'channel';
+            channelId = ABUNDANCE_CHANNEL.id;
+            const result = await getChannelVideos(ABUNDANCE_CHANNEL.id, 20);
+            initialVideos = result.videos;
+            initialPageToken = result.nextPageToken;
         } else if (channelIdFilter) {
             // Filter by Channel
             const channel = interests.channels.find(c => c.id === channelIdFilter);
@@ -108,7 +120,7 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
 
     return (
         <div>
-            {interests.categories && interests.categories.length > 0 && (
+            {(interests.categories?.length > 0 || isAbundanceFeed) && (
                 <CategoryTabs categories={interests.categories} />
             )}
             
@@ -133,4 +145,3 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
         </div>
     );
 }
-
