@@ -111,8 +111,8 @@ export default function VideoFeed({ initialVideos, title, fetchMore, initialPage
                     
                     {/* Intersection Observer target */}
                     {hasMore && (
-                        <div ref={observerTarget} className="mt-8 flex justify-center">
-                            {isLoading && <Loader />}
+                        <div ref={observerTarget} className="mt-8 flex min-h-24 justify-center">
+                            {isLoading && <Loader compact label="Loading more videos..." />}
                             {error && (
                                 <div className="text-neutral-700 dark:text-neutral-300 text-sm">
                                     {error}

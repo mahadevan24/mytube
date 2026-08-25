@@ -119,7 +119,7 @@ export default async function FeedFetcher({ searchParams }: FeedFetcherProps) {
     }
 
     return (
-        <div>
+        <div className="relative min-h-[50vh]">
             {(interests.categories?.length > 0 || isAbundanceFeed) && (
                 <CategoryTabs categories={interests.categories} />
             )}
