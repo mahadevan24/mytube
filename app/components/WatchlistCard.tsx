@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { WatchlistVideo, WatchlistStatus } from '../lib/types';
-import Link from 'next/link';
-import { Clock, Play, Trash2, CheckCircle2, Bookmark, Eye, ExternalLink, Calendar } from 'lucide-react';
+import { Play, Trash2, CheckCircle2, Bookmark, Eye, ExternalLink, Calendar } from 'lucide-react';
 
 function formatDuration(duration?: string) {
     if (!duration) return null;
@@ -51,12 +50,7 @@ interface WatchlistCardProps {
 }
 
 export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange }: WatchlistCardProps) {
-    const [mounted, setMounted] = useState(false);
     const [isRemoving, setIsRemoving] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     const handlePlayClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -92,13 +86,18 @@ export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange 
     };
 
     return (
-        <div className={`group relative bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-white/10 rounded-2xl p-3 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-neutral-400 dark:hover:border-neutral-600 ${isRemoving ? 'opacity-40 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
+        <div
+            className={`group relative bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-white/10 rounded-2xl p-3 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-neutral-400 dark:hover:border-neutral-600 ${isRemoving ? 'opacity-40 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}
+            style={{ contentVisibility: 'auto', containIntrinsicSize: '0 360px' }}
+        >
             <div className="space-y-3">
                 {/* Thumbnail Container */}
                 <div className="relative aspect-video rounded-xl overflow-hidden bg-neutral-200 dark:bg-neutral-950 ring-1 ring-black/5 dark:ring-white/5">
                     <img
                         src={video.thumbnail}
                         alt={video.title}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
 
@@ -151,12 +150,10 @@ export default function WatchlistCard({ video, onPlay, onRemove, onStatusChange 
                         <span className="truncate max-w-[65%] font-medium text-neutral-700 dark:text-neutral-300">
                             {video.channelTitle}
                         </span>
-                        {mounted && (
-                            <span className="text-[10px] text-neutral-400 flex items-center gap-1">
-                                <Calendar size={10} />
-                                {timeAgo(video.addedAt || video.publishedAt)}
-                            </span>
-                        )}
+                        <span className="text-[10px] text-neutral-400 flex items-center gap-1" suppressHydrationWarning>
+                            <Calendar size={10} />
+                            {timeAgo(video.addedAt || video.publishedAt)}
+                        </span>
                     </div>
                 </div>
             </div>

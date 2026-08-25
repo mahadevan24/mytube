@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { ToastProvider } from "./components/Toast";
+import { WatchProgressProvider } from "./components/WatchProgressProvider";
 
 export const metadata: Metadata = {
   title: "MyTube - Personal Dashboard",
@@ -30,7 +31,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ToastProvider>
-            {children}
+            <WatchProgressProvider>
+              {children}
+            </WatchProgressProvider>
           </ToastProvider>
         </ThemeProvider>
       </body>

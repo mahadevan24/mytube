@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { memo, useState } from 'react';
 import { Video } from '../lib/types';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Clock, Bookmark, Check, Loader2, Play, Music } from 'lucide-react';
 import { addVideoToWatchlistAction, addVideoToMusicAction } from '../actions';
 import { useToast } from './Toast';
-import { getWatchProgress, parseIsoDurationToSeconds, formatSecondsToTimestamp, WatchProgress } from '../lib/watchProgress';
+import { parseIsoDurationToSeconds, formatSecondsToTimestamp } from '../lib/watchProgress';
+import { useWatchProgress } from './WatchProgressProvider';
 
 function formatDuration(duration?: string) {
     if (!duration) return null;
@@ -50,36 +52,16 @@ function timeAgo(dateString: string) {
 interface VideoCardProps {
     video: Video;
     onPlay?: (videoId: string) => void;
+    eagerImage?: boolean;
 }
 
-export default function VideoCard({ video, onPlay }: VideoCardProps) {
-    const [mounted, setMounted] = useState(false);
+function VideoCard({ video, onPlay, eagerImage = false }: VideoCardProps) {
     const [isSaved, setIsSaved] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isSavedMusic, setIsSavedMusic] = useState(false);
     const [isSavingMusic, setIsSavingMusic] = useState(false);
-    const [progress, setProgress] = useState<WatchProgress | null>(null);
+    const progress = useWatchProgress(video.id);
     const { showToast } = useToast();
-
-    useEffect(() => {
-        setMounted(true);
-
-        const loadProgress = () => {
-            const saved = getWatchProgress(video.id);
-            setProgress(saved);
-        };
-
-        loadProgress();
-
-        const handleProgressUpdate = () => {
-            loadProgress();
-        };
-
-        window.addEventListener('mytube-watch-progress-updated', handleProgressUpdate);
-        return () => {
-            window.removeEventListener('mytube-watch-progress-updated', handleProgressUpdate);
-        };
-    }, [video.id]);
 
     const handleClick = (e: React.MouseEvent) => {
         if (onPlay) {
@@ -134,7 +116,10 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
     const ytExternalLink = `https://www.youtube.com/watch?v=${video.id}${progress?.seconds ? `&t=${progress.seconds}s` : ''}`;
 
     return (
-        <div className="group flex flex-col gap-3">
+        <div
+            className="group flex flex-col gap-3"
+            style={{ contentVisibility: 'auto', containIntrinsicSize: '0 280px' }}
+        >
             <div className="relative aspect-video rounded-xl overflow-hidden bg-neutral-200 dark:bg-neutral-900 shadow-sm dark:shadow-lg ring-1 ring-neutral-200 dark:ring-white/5 group-hover:ring-neutral-400 dark:group-hover:ring-white/30 transition-all duration-300">
                 <a
                     href={ytExternalLink}
@@ -143,11 +128,22 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                     className="block w-full h-full cursor-pointer relative"
                     rel="noreferrer"
                 >
-                    <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    {video.thumbnail ? (
+                        <Image
+                            src={video.thumbnail}
+                            alt={video.title}
+                            fill
+                            loading={eagerImage ? 'eager' : 'lazy'}
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                    ) : (
+                        <div className="h-full w-full bg-neutral-200 dark:bg-neutral-900" />
+                    )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
 
                     {/* Resume Timestamp Badge */}
-                    {mounted && progress && progress.seconds > 0 && (
+                    {progress && progress.seconds > 0 && (
                         <span className="absolute bottom-2 left-2 bg-black/85 backdrop-blur-md text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-white/30 flex items-center gap-1 z-10">
                             <Play size={10} className="fill-white" />
                             Resume {formatSecondsToTimestamp(progress.seconds)}
@@ -161,7 +157,7 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                     )}
 
                     {/* Watch progress bar at bottom of thumbnail */}
-                    {mounted && progress && progress.seconds > 0 && (
+                    {progress && progress.seconds > 0 && (
                         <div className="absolute bottom-0 left-0 right-0 h-1 bg-neutral-800/80 z-20 overflow-hidden">
                             <div
                                 className="h-full bg-neutral-900 dark:bg-white transition-all duration-300"
@@ -219,15 +215,13 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
                         {video.channelTitle}
                     </Link>
                     <div className="text-neutral-500 text-[10px] flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900/50 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-white/5">
-                        {mounted && (
-                            <>
-                                <Clock size={10} className="text-neutral-600" />
-                                {timeAgo(video.publishedAt)}
-                            </>
-                        )}
+                        <Clock size={10} className="text-neutral-600" />
+                        <span suppressHydrationWarning>{timeAgo(video.publishedAt)}</span>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
+export default memo(VideoCard);

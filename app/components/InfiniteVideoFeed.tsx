@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Video } from '../lib/types';
 import VideoFeed from './VideoFeed';
 
@@ -12,7 +12,6 @@ interface InfiniteVideoFeedProps {
     categoryId?: string;
     initialPageToken?: string;
     initialChannelTokens?: Record<string, string | undefined>;
-    searchQuery?: string;
 }
 
 export default function InfiniteVideoFeed({
@@ -23,24 +22,16 @@ export default function InfiniteVideoFeed({
     categoryId,
     initialPageToken,
     initialChannelTokens,
-    searchQuery,
 }: InfiniteVideoFeedProps) {
     // Track channel tokens for home feed pagination
     const [channelTokens, setChannelTokens] = useState<Record<string, string | undefined>>(
-        initialChannelTokens || {}
+        () => initialChannelTokens || {}
     );
 
-    // Reset channel tokens when initialChannelTokens changes
-    useEffect(() => {
-        if (initialChannelTokens) {
-            setChannelTokens(initialChannelTokens);
-        }
-    }, [initialChannelTokens]);
-
-    const fetchMore = async (pageToken?: string) => {
+    const fetchMore = useCallback(async (pageToken?: string) => {
         if (feedType === 'channel' && channelId) {
             const params = new URLSearchParams({
-                maxResults: '20',
+                maxResults: '24',
             });
             if (pageToken) {
                 params.set('pageToken', pageToken);
@@ -54,7 +45,7 @@ export default function InfiniteVideoFeed({
         } else {
             // Home or Category feed
             const params = new URLSearchParams({
-                maxResults: '20',
+                maxResults: '5',
             });
 
             if (feedType === 'category' && categoryId) {
@@ -67,7 +58,7 @@ export default function InfiniteVideoFeed({
                 // pageToken for home feed is actually the channelTokens JSON
                 try {
                     tokensToUse = JSON.parse(pageToken);
-                } catch (e) {
+                } catch {
                     // Invalid JSON, use current tokens
                     tokensToUse = channelTokens;
                 }
@@ -93,7 +84,7 @@ export default function InfiniteVideoFeed({
                 hasMore: data.hasMore,
             };
         }
-    };
+    }, [feedType, channelId, categoryId, channelTokens]);
 
     return (
         <VideoFeed

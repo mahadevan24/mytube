@@ -4,20 +4,23 @@ import { useState, useEffect, useRef } from 'react';
 import { Menu, X, PanelLeftClose, PanelLeftOpen, Layers, ArrowUp, Tv, ListVideo, Music, Rocket, LogOut } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { logout } from '../actions';
 
+const InterestManager = dynamic(() => import('./InterestManager'), {
+    ssr: false,
+    loading: () => <div className="p-4 text-sm text-neutral-500">Loading channels…</div>,
+});
 
 interface AppShellProps {
-    sidebar: React.ReactNode;
     children: React.ReactNode;
     themeToggle: React.ReactNode;
     isEmpty: boolean;
 }
 
-export default function AppShell({ sidebar, children, themeToggle, isEmpty }: AppShellProps) {
+export default function AppShell({ children, themeToggle, isEmpty }: AppShellProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(false);
-    const [mounted, setMounted] = useState(false);
 
     // Resizable Sidebar State
     const [sidebarWidth, setSidebarWidth] = useState(320);
@@ -32,11 +35,6 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    // Mark as mounted after hydration
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
     // Close mobile menu on resize to desktop
     useEffect(() => {
         const handleResize = () => {
@@ -50,7 +48,8 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
 
     // Auto-close mobile menu on navigation
     useEffect(() => {
-        setIsMobileMenuOpen(false);
+        const animationFrame = requestAnimationFrame(() => setIsMobileMenuOpen(false));
+        return () => cancelAnimationFrame(animationFrame);
     }, [pathname, searchParams]);
 
     // Scroll Listener for Back to Top
@@ -123,7 +122,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="p-2 -ml-2 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                     >
-                        {mounted ? (isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />) : <div className="w-5 h-5" />}
+                        {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
                     <h1 className="text-xl font-bold tracking-wide text-neutral-900 dark:text-white">
                         MyTube
@@ -169,7 +168,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                         className="absolute top-16 left-0 bottom-0 w-3/4 max-w-sm bg-white dark:bg-neutral-950 border-r border-neutral-200 dark:border-white/10 shadow-2xl p-3 animate-in slide-in-from-left duration-300 flex flex-col"
                         onClick={e => e.stopPropagation()}
                     >
-                        {sidebar}
+                        <InterestManager />
                     </div>
                 </div>
             )}
@@ -192,12 +191,12 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                             className="p-1.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-white/10 rounded-lg transition-colors"
                             title="Collapse Sidebar"
                         >
-                            {mounted ? <PanelLeftClose size={18} /> : <div className="w-[18px] h-[18px]" />}
+                            <PanelLeftClose size={18} />
                         </button>
                     </div>
                 </div>
                 <div className="flex-1 overflow-hidden">
-                    {sidebar}
+                    {isDesktopSidebarOpen && <InterestManager />}
                 </div>
 
                 {/* Drag Handle */}
@@ -221,7 +220,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                                 className="p-2 -ml-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-2 group"
                                 title="Open Sidebar"
                             >
-                                {mounted ? <PanelLeftOpen size={20} className="group-hover:scale-110 transition-transform" /> : <div className="w-5 h-5" />}
+                                <PanelLeftOpen size={20} className="group-hover:scale-110 transition-transform" />
                                 <span className="font-bold text-base text-neutral-900 dark:text-white tracking-tight">
                                     MyTube
                                 </span>
@@ -280,7 +279,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                     className={`fixed bottom-8 right-8 z-50 p-3 bg-black dark:bg-white text-white dark:text-black rounded-full shadow-xl hover:bg-neutral-800 dark:hover:bg-neutral-200 hover:scale-110 transition-all duration-300 ${showBackToTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
                     title="Back to Top"
                 >
-                    {mounted ? <ArrowUp size={24} /> : <div className="w-6 h-6" />}
+                    <ArrowUp size={24} />
                 </button>
 
 
@@ -291,7 +290,7 @@ export default function AppShell({ sidebar, children, themeToggle, isEmpty }: Ap
                     {isEmpty ? (
                         <div className="flex flex-col items-center justify-center h-[70vh] text-center space-y-6 animate-in fade-in duration-700">
                             <div className="w-24 h-24 bg-white dark:bg-neutral-900/80 rounded-3xl flex items-center justify-center border border-neutral-200 dark:border-white/5 shadow-2xl">
-                                {mounted ? <Layers size={48} className="text-neutral-900 dark:text-white" /> : <div className="w-12 h-12" />}
+                                <Layers size={48} className="text-neutral-900 dark:text-white" />
                             </div>
                             <div className="space-y-2 max-w-md px-4">
                                 <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Your Personal Dashboard</h2>

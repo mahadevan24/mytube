@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { Video } from '../lib/types';
 import VideoCard from './VideoCard';
-import VideoModal from './VideoModal';
 import Loader from './Loader';
+
+const VideoModal = dynamic(() => import('./VideoModal'), { ssr: false });
 
 interface VideoFeedProps {
     initialVideos: Video[];
@@ -44,11 +46,11 @@ export default function VideoFeed({ initialVideos, title, fetchMore, initialPage
             const result = await fetchMore(nextPageToken);
             
             // Remove duplicates by video ID
-            const existingIds = new Set(videos.map(v => v.id));
-            const newVideos = result.videos.filter(v => !existingIds.has(v.id));
-            
-            // Append new videos maintaining pre-ordered round-robin structure
-            setVideos(prev => [...prev, ...newVideos]);
+            setVideos(prev => {
+                const existingIds = new Set(prev.map(video => video.id));
+                const newVideos = result.videos.filter(video => !existingIds.has(video.id));
+                return [...prev, ...newVideos];
+            });
             setNextPageToken(result.nextPageToken);
             setHasMore(result.hasMore);
         } catch (err) {
@@ -57,7 +59,7 @@ export default function VideoFeed({ initialVideos, title, fetchMore, initialPage
         } finally {
             setIsLoading(false);
         }
-    }, [isLoading, hasMore, nextPageToken, videos, fetchMore]);
+    }, [isLoading, hasMore, nextPageToken, fetchMore]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -81,13 +83,13 @@ export default function VideoFeed({ initialVideos, title, fetchMore, initialPage
         };
     }, [hasMore, isLoading, loadMore]);
 
-    const handlePlayVideo = (videoId: string) => {
+    const handlePlayVideo = useCallback((videoId: string) => {
         setSelectedVideoId(videoId);
-    };
+    }, []);
 
-    const handleCloseModal = () => {
+    const handleCloseModal = useCallback(() => {
         setSelectedVideoId(null);
-    };
+    }, []);
 
     return (
         <>
@@ -100,11 +102,12 @@ export default function VideoFeed({ initialVideos, title, fetchMore, initialPage
             ) : (
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-                        {videos.map((video) => (
+                        {videos.map((video, index) => (
                             <VideoCard
                                 key={video.id}
                                 video={video}
                                 onPlay={handlePlayVideo}
+                                eagerImage={index < 4}
                             />
                         ))}
                     </div>

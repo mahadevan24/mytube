@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useTransition } from 'react';
+import dynamic from 'next/dynamic';
 import { Video } from '../lib/types';
 import VideoCard from './VideoCard';
-import VideoModal from './VideoModal';
 import { getElonMuskVideosAction } from '../actions';
 import { Search, Mic, Tv, Flame, RefreshCw, Cpu, Globe } from 'lucide-react';
+
+const VideoModal = dynamic(() => import('./VideoModal'), { ssr: false });
 
 interface ElonMuskManagerProps {
     initialVideos: Video[];
@@ -20,16 +22,6 @@ export default function ElonMuskManager({ initialVideos }: ElonMuskManagerProps)
     const [activeSearchTerm, setActiveSearchTerm] = useState('');
     const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
-
-    // Automatically refresh videos whenever the tab is opened
-    useEffect(() => {
-        startTransition(async () => {
-            const fetched = await getElonMuskVideosAction('all', '');
-            if (fetched && fetched.length > 0) {
-                setVideos(fetched);
-            }
-        });
-    }, []);
 
     const handleFilterChange = (filter: ElonFilter) => {
         setActiveFilter(filter);

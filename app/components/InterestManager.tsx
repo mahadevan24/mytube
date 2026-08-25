@@ -112,6 +112,8 @@ function SortableChannelItem({
                         <img 
                             src={channel.thumbnail} 
                             alt={channel.title} 
+                            loading="lazy"
+                            decoding="async"
                             referrerPolicy="no-referrer"
                             onError={() => setImgError(true)}
                             className={`w-6 h-6 rounded-full flex-shrink-0 object-cover ring-1 transition-all ${isActive ? 'ring-2 ring-neutral-900 dark:ring-white' : 'ring-black/10 dark:ring-white/10 group-hover:ring-neutral-400 dark:group-hover:ring-neutral-600'}`} 
@@ -980,7 +982,7 @@ export default function InterestManager() {
                                 className="flex items-center gap-2.5 w-full text-left hover:bg-neutral-100 dark:hover:bg-neutral-800/70 p-2 rounded-xl transition-all duration-150 group"
                             >
                                 {c.thumbnail ? (
-                                    <img src={c.thumbnail} alt={c.title} referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-neutral-200 dark:ring-neutral-700" />
+                                    <img src={c.thumbnail} alt={c.title} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-neutral-200 dark:ring-neutral-700" />
                                 ) : (
                                     <div className="w-7 h-7 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
                                         <Tv size={12} />

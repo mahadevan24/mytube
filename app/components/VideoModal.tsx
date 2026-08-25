@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -19,9 +20,10 @@ declare global {
 }
 
 export default function VideoModal({ videoId, onClose, loop = false }: VideoModalProps) {
-    const [mounted, setMounted] = useState(false);
-    const [savedStartSeconds, setSavedStartSeconds] = useState<number>(0);
-    const [currentSeconds, setCurrentSeconds] = useState<number>(0);
+    const [initialProgress] = useState(() => getWatchProgress(videoId));
+    const initialSeconds = initialProgress && initialProgress.seconds > 5 ? initialProgress.seconds : 0;
+    const [savedStartSeconds, setSavedStartSeconds] = useState<number>(initialSeconds);
+    const [currentSeconds, setCurrentSeconds] = useState<number>(initialSeconds);
     const [isPlayingFromStart, setIsPlayingFromStart] = useState(false);
     const [showResumeBadge, setShowResumeBadge] = useState(true);
     const playerRef = useRef<any>(null);
@@ -30,20 +32,12 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        setMounted(true);
         document.body.style.overflow = 'hidden';
 
         // Auto hide top resume badge after 5 seconds
         const badgeTimer = setTimeout(() => {
             setShowResumeBadge(false);
         }, 5000);
-
-        // Check if there is saved progress for this video
-        const progress = getWatchProgress(videoId);
-        if (progress && progress.seconds > 5) {
-            setSavedStartSeconds(progress.seconds);
-            setCurrentSeconds(progress.seconds);
-        }
 
         const toggleFullscreen = () => {
             const target = containerRef.current || iframeRef.current;
@@ -85,8 +79,6 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
 
     // Setup YouTube IFrame API to track playback time
     useEffect(() => {
-        if (!mounted) return;
-
         let player: any = null;
 
         const saveCurrentTime = () => {
@@ -172,7 +164,7 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
                 } catch {}
             }
         };
-    }, [mounted, videoId]);
+    }, [videoId]);
 
     const handleRestart = () => {
         setIsPlayingFromStart(true);
@@ -189,8 +181,6 @@ export default function VideoModal({ videoId, onClose, loop = false }: VideoModa
             onClose();
         }
     };
-
-    if (!mounted) return null;
 
     const startParam = !isPlayingFromStart && savedStartSeconds > 0 ? `&start=${savedStartSeconds}` : '';
     const loopParam = loop ? `&loop=1&playlist=${videoId}` : '';

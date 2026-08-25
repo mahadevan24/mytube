@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
+import dynamic from 'next/dynamic';
 import { MusicVideo, Video } from '../lib/types';
 import MusicCard from './MusicCard';
 import VideoCard from './VideoCard';
-import VideoModal from './VideoModal';
 import {
     addMusicVideoByUrlAction,
     removeMusicVideoAction,
@@ -25,6 +25,8 @@ import {
     ListMusic
 } from 'lucide-react';
 import { useToast } from './Toast';
+
+const VideoModal = dynamic(() => import('./VideoModal'), { ssr: false });
 
 interface MusicManagerProps {
     initialMusicList: MusicVideo[];
@@ -286,7 +288,7 @@ export default function MusicManager({ initialMusicList }: MusicManagerProps) {
                             <div className="relative">
                                 <select
                                     value={sortBy}
-                                    onChange={e => setSortBy(e.target.value as any)}
+                                    onChange={e => setSortBy(e.target.value as typeof sortBy)}
                                     className="appearance-none pl-8 pr-6 py-1.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 rounded-xl text-xs font-medium text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                                 >
                                     <option value="newest">Newest First</option>

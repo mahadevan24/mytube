@@ -1,7 +1,9 @@
 import { Suspense } from 'react';
 import { Layers } from 'lucide-react';
-import FeedFetcher from '../../components/FeedFetcher';
+import FeedFetcher, { resolveFeedScope } from '../../components/FeedFetcher';
 import Loader from '../../components/Loader';
+import CategoryTabs from '../../components/CategoryTabs';
+import TabVideoSearch from '../../components/TabVideoSearch';
 import { getStoredInterests } from '../../lib/storage';
 import { ABUNDANCE_FEED_ID } from '../../lib/curatedFeeds';
 
@@ -10,11 +12,13 @@ interface PageProps {
 }
 
 export default async function FeedPage({ searchParams }: PageProps) {
-  const resolvedSearchParams = await searchParams;
-
-  const interests = await getStoredInterests();
+  const [resolvedSearchParams, interests] = await Promise.all([
+    searchParams,
+    getStoredInterests(),
+  ]);
   const hasInterests = interests.channels.length > 0;
   const isAbundanceFeed = resolvedSearchParams.categoryId === ABUNDANCE_FEED_ID;
+  const scope = resolveFeedScope(interests, resolvedSearchParams);
 
   if (!hasInterests && !isAbundanceFeed) {
     return (
@@ -33,8 +37,25 @@ export default async function FeedPage({ searchParams }: PageProps) {
   }
 
   return (
-    <Suspense key={JSON.stringify(resolvedSearchParams)} fallback={<Loader />}>
-      <FeedFetcher searchParams={resolvedSearchParams} />
-    </Suspense>
+    <div className="relative min-h-[50vh]">
+      {(interests.categories?.length > 0 || isAbundanceFeed) && (
+        <CategoryTabs categories={interests.categories} />
+      )}
+
+      {hasInterests && (
+        <TabVideoSearch
+          key={scope.searchQuery || ''}
+          scopeName={scope.scopeName}
+          channelCount={scope.scopeChannels.length}
+          initialQuery={scope.searchQuery}
+        />
+      )}
+
+      <Suspense key={JSON.stringify(resolvedSearchParams)} fallback={<Loader />}>
+        <FeedFetcher interests={interests} scope={scope} />
+      </Suspense>
+    </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

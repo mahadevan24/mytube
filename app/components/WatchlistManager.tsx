@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import dynamic from 'next/dynamic';
 import { WatchlistVideo, WatchlistStatus } from '../lib/types';
 import WatchlistCard from './WatchlistCard';
-import VideoModal from './VideoModal';
 import {
     addWatchlistVideoByUrlAction,
     removeWatchlistVideoAction,
@@ -23,6 +23,8 @@ import {
     Check
 } from 'lucide-react';
 import { useToast } from './Toast';
+
+const VideoModal = dynamic(() => import('./VideoModal'), { ssr: false });
 
 interface WatchlistManagerProps {
     initialWatchlist: WatchlistVideo[];
@@ -215,7 +217,7 @@ export default function WatchlistManager({ initialWatchlist }: WatchlistManagerP
                     <div className="relative">
                         <select
                             value={sortBy}
-                            onChange={e => setSortBy(e.target.value as any)}
+                            onChange={e => setSortBy(e.target.value as typeof sortBy)}
                             className="appearance-none pl-8 pr-6 py-1.5 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 rounded-xl text-xs font-medium text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                         >
                             <option value="newest">Newest First</option>

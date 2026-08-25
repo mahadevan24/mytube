@@ -279,11 +279,13 @@ export async function login(formData: FormData) {
     const envPassword = process.env.AUTH_PASSWORD || 'mahadevanax';
 
     // Fetch user from Supabase
-    let { data: user, error } = await supabase
+    const userResult = await supabase
         .from('users')
         .select('id, password_hash')
         .eq('username', username)
         .maybeSingle();
+    let user = userResult.data;
+    const error = userResult.error;
 
     // Auto-create/migrate primary account (mahadevanax or AUTH_USERNAME) if missing in database
     if (!user && (username === envUsername || username === 'mahadevanax') && (password === envPassword || password === 'mahadevanax')) {

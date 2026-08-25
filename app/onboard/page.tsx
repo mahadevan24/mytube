@@ -188,7 +188,7 @@ export default function OnboardPage() {
                                 </h4>
                                 <ol className="list-decimal list-inside space-y-1.5 text-neutral-700 dark:text-neutral-300">
                                     <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-emerald-600 dark:text-emerald-400 underline hover:text-emerald-700 dark:hover:text-emerald-300">Google Cloud Console</a>.</li>
-                                    <li>Create a new project (e.g. <em>"MyTube Dashboard"</em>).</li>
+                                    <li>Create a new project (e.g. <em>&quot;MyTube Dashboard&quot;</em>).</li>
                                     <li>Navigate to <strong>APIs & Services</strong> &gt; <strong>Library</strong>.</li>
                                     <li>Search for <strong>YouTube Data API v3</strong> and click <strong>Enable</strong>.</li>
                                     <li>Go to <strong>Credentials</strong> &gt; <strong>Create Credentials</strong> &gt; <strong>API Key</strong>.</li>

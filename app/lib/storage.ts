@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { getCurrentUser } from './auth';
+import { cache } from 'react';
 import { Channel, UserInterests, Category, WatchlistVideo, WatchlistStatus, MusicVideo } from './types';
 
 const UNCATEGORIZED_ID = 'uncategorized';
@@ -28,11 +29,13 @@ async function readData(explicitUserId?: string): Promise<UserInterests> {
 
     try {
         // 1. Try fetching row for this specific user
-        let { data, error } = await supabase
+        const readResult = await supabase
             .from('user_data')
             .select('id, content, user_id')
             .eq('user_id', userId)
             .maybeSingle();
+        let data = readResult.data;
+        const error = readResult.error;
 
         if (error) {
             console.error('Supabase read error:', error);
@@ -82,11 +85,13 @@ async function writeData(data: UserInterests, explicitUserId?: string): Promise<
     }
 
     try {
-        let { data: existingRow, error: readError } = await supabase
+        const existingResult = await supabase
             .from('user_data')
             .select('id')
             .eq('user_id', userId)
             .maybeSingle();
+        let existingRow = existingResult.data;
+        const readError = existingResult.error;
 
         if (readError) throw readError;
 
@@ -124,9 +129,9 @@ async function writeData(data: UserInterests, explicitUserId?: string): Promise<
     }
 }
 
-export const getStoredInterests = async (userId?: string): Promise<UserInterests> => {
+export const getStoredInterests = cache(async (userId?: string): Promise<UserInterests> => {
     return await readData(userId);
-};
+});
 
 export const addChannel = async (channel: Channel, categoryId: string = UNCATEGORIZED_ID, userId?: string) => {
     const interests = await readData(userId);

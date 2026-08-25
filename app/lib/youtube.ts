@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { google } from 'googleapis';
+import { cache } from 'react';
 import { Video, Channel, MusicVideo } from './types';
 import { getCurrentUser } from './auth';
 
 const youtube = google.youtube('v3');
 
-async function getApiKey(): Promise<string | undefined> {
+const getApiKey = cache(async (): Promise<string | undefined> => {
     try {
         const user = await getCurrentUser();
         if (user?.youtubeApiKey && user.youtubeApiKey.trim()) {
@@ -15,7 +16,7 @@ async function getApiKey(): Promise<string | undefined> {
         // Fallback if executed outside request scope
     }
     return process.env.YOUTUBE_API_KEY;
-}
+});
 
 // Initialize YouTube Client
 const getYoutubeClient = () => {
@@ -23,9 +24,9 @@ const getYoutubeClient = () => {
 };
 
 // Helper: Get Uploads Playlist ID for a Channel
-async function getUploadsPlaylistId(channelId: string): Promise<string | null> {
+async function getUploadsPlaylistId(channelId: string, apiKeyOverride?: string): Promise<string | null> {
     const yt = getYoutubeClient();
-    const apiKey = await getApiKey();
+    const apiKey = apiKeyOverride ?? await getApiKey();
     try {
         const response = await yt.channels.list({
             key: apiKey,
@@ -44,26 +45,68 @@ async function getUploadsPlaylistId(channelId: string): Promise<string | null> {
     }
 }
 
+async function getUploadsPlaylistIds(
+    channelIds: string[],
+    apiKey?: string
+): Promise<Map<string, string>> {
+    const yt = getYoutubeClient();
+    const uniqueIds = Array.from(new Set(channelIds));
+    const chunks: string[][] = [];
+    for (let i = 0; i < uniqueIds.length; i += 50) {
+        chunks.push(uniqueIds.slice(i, i + 50));
+    }
+
+    try {
+        const responses = await Promise.all(chunks.map(id => yt.channels.list({
+            key: apiKey,
+            part: ['contentDetails'],
+            id,
+        })));
+        const playlistIds = new Map<string, string>();
+        responses.forEach((response) => {
+            (response.data.items || []).forEach((item: any) => {
+                const uploadsId = item.contentDetails?.relatedPlaylists?.uploads;
+                if (item.id && uploadsId) playlistIds.set(item.id, uploadsId);
+            });
+        });
+        return playlistIds;
+    } catch (error) {
+        console.error('Error fetching uploads playlist IDs:', error);
+        return new Map();
+    }
+}
+
 // Fetch video details (duration) for a list of video IDs
-async function getVideoDetails(videoIds: string[]): Promise<Map<string, { duration: string; viewCount?: string }>> {
+async function getVideoDetails(
+    videoIds: string[],
+    apiKeyOverride?: string
+): Promise<Map<string, { duration: string; viewCount?: string }>> {
     if (videoIds.length === 0) return new Map();
     const yt = getYoutubeClient();
-    const apiKey = await getApiKey();
+    const apiKey = apiKeyOverride ?? await getApiKey();
     try {
-        const response = await yt.videos.list({
+        const uniqueIds = Array.from(new Set(videoIds));
+        const chunks: string[][] = [];
+        for (let i = 0; i < uniqueIds.length; i += 50) {
+            chunks.push(uniqueIds.slice(i, i + 50));
+        }
+
+        const responses = await Promise.all(chunks.map(id => yt.videos.list({
             key: apiKey,
             part: ['contentDetails', 'statistics'],
-            id: videoIds,
-        });
+            id,
+        })));
 
-        const detailsMap = new Map();
-        (response.data.items || []).forEach((item: any) => {
-            if (item.id) {
-                detailsMap.set(item.id, {
-                    duration: item.contentDetails?.duration,
-                    viewCount: item.statistics?.viewCount,
-                });
-            }
+        const detailsMap = new Map<string, { duration: string; viewCount?: string }>();
+        responses.forEach((response) => {
+            (response.data.items || []).forEach((item: any) => {
+                if (item.id) {
+                    detailsMap.set(item.id, {
+                        duration: item.contentDetails?.duration,
+                        viewCount: item.statistics?.viewCount,
+                    });
+                }
+            });
         });
         return detailsMap;
     } catch (error) {
@@ -73,10 +116,13 @@ async function getVideoDetails(videoIds: string[]): Promise<Map<string, { durati
 }
 
 // Fetch subscriber count for a list of channel IDs
-async function getChannelsSubscriberCounts(channelIds: string[]): Promise<Map<string, number>> {
+async function getChannelsSubscriberCounts(
+    channelIds: string[],
+    apiKeyOverride?: string
+): Promise<Map<string, number>> {
     if (channelIds.length === 0) return new Map();
     const yt = getYoutubeClient();
-    const apiKey = await getApiKey();
+    const apiKey = apiKeyOverride ?? await getApiKey();
     try {
         const uniqueIds = Array.from(new Set(channelIds));
         const response = await yt.channels.list({
@@ -126,14 +172,14 @@ export async function getChannelVideos(
 ): Promise<ChannelVideosResponse> {
     const yt = getYoutubeClient();
     const apiKey = await getApiKey();
-    const uploadsPlaylistId = await getUploadsPlaylistId(channelId);
+    const uploadsPlaylistId = await getUploadsPlaylistId(channelId, apiKey);
 
     if (!uploadsPlaylistId) {
         return { videos: [], hasMore: false };
     }
 
     try {
-        const fetchLimit = Math.max(maxResults * 4, 50);
+        const fetchLimit = Math.min(50, Math.max(maxResults * 2, 10));
 
         const response = await yt.playlistItems.list({
             key: apiKey,
@@ -147,7 +193,7 @@ export async function getChannelVideos(
         const nextPageToken = response.data.nextPageToken;
         const videoIds = items.map((item: any) => item.contentDetails?.videoId).filter(Boolean);
 
-        const detailsMap = await getVideoDetails(videoIds);
+        const detailsMap = await getVideoDetails(videoIds, apiKey);
 
         const videos: Video[] = items
             .map((item: any) => {
@@ -190,25 +236,75 @@ export interface PersonalizedFeedResponse {
 
 export async function getPersonalizedFeed(
     channels: Channel[],
-    maxResultsPerChannel = 10,
-    channelTokens?: Record<string, string | undefined>
+    maxResultsPerChannel = 5,
+    channelTokens?: Record<string, string | undefined>,
+    maxTotalResults = 32
 ): Promise<PersonalizedFeedResponse> {
     if (channels.length === 0) {
         return { videos: [], channelTokens: {}, hasMore: false };
     }
 
-    const channelPromises = channels.map(async (c) => {
-        const pageToken = channelTokens?.[c.id];
-        const result = await getChannelVideos(c.id, maxResultsPerChannel, pageToken);
+    const yt = getYoutubeClient();
+    const apiKey = await getApiKey();
+    const playlistIds = await getUploadsPlaylistIds(channels.map(c => c.id), apiKey);
+    const fetchLimit = Math.min(50, Math.max(maxResultsPerChannel * 2, 10));
+
+    const rawChannelResults = await Promise.all(channels.map(async (channel) => {
+        const playlistId = playlistIds.get(channel.id);
+        if (!playlistId) {
+            return { channelId: channel.id, items: [] as any[], nextPageToken: undefined };
+        }
+
+        try {
+            const response = await yt.playlistItems.list({
+                key: apiKey,
+                part: ['snippet', 'contentDetails'],
+                playlistId,
+                maxResults: fetchLimit,
+                pageToken: channelTokens?.[channel.id],
+            });
+            return {
+                channelId: channel.id,
+                items: response.data.items || [],
+                nextPageToken: response.data.nextPageToken || undefined,
+            };
+        } catch (error) {
+            console.error(`Error fetching uploads for channel ${channel.id}:`, error);
+            return { channelId: channel.id, items: [] as any[], nextPageToken: undefined };
+        }
+    }));
+
+    const videoIds = rawChannelResults.flatMap(result =>
+        result.items.map((item: any) => item.contentDetails?.videoId).filter(Boolean)
+    );
+    const detailsMap = await getVideoDetails(videoIds, apiKey);
+
+    const channelResults = rawChannelResults.map((result) => {
+        const videos: Video[] = result.items
+            .map((item: any) => {
+                const videoId = item.contentDetails?.videoId;
+                const details = detailsMap.get(videoId);
+                return {
+                    id: videoId || '',
+                    title: item.snippet?.title || '',
+                    thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
+                    channelTitle: item.snippet?.channelTitle || '',
+                    publishedAt: item.snippet?.publishedAt || '',
+                    channelId: result.channelId,
+                    duration: details?.duration,
+                    viewCount: details?.viewCount,
+                };
+            })
+            .filter((video: Video) => video.id && !isTooShort(video.duration))
+            .slice(0, maxResultsPerChannel);
+
         return {
-            channelId: c.id,
-            videos: result.videos,
+            channelId: result.channelId,
+            videos,
             nextPageToken: result.nextPageToken,
-            hasMore: result.hasMore,
+            hasMore: Boolean(result.nextPageToken),
         };
     });
-
-    const channelResults = await Promise.all(channelPromises);
 
     const channelVideoLists = channelResults.map((r) => r.videos);
     const maxLen = Math.max(0, ...channelVideoLists.map((list) => list.length));
@@ -242,7 +338,7 @@ export async function getPersonalizedFeed(
     const hasMore = channelResults.some((r) => r.hasMore);
 
     return {
-        videos: sortedVideos,
+        videos: sortedVideos.slice(0, maxTotalResults),
         channelTokens: newChannelTokens,
         hasMore,
     };
@@ -315,7 +411,7 @@ export async function searchCategoryVideos(
             return { videos: [], hasMore: false };
         }
 
-        const detailsMap = await getVideoDetails(allVideoIds);
+        const detailsMap = await getVideoDetails(allVideoIds, apiKey);
 
         const decodeEntities = (str: string) =>
             str
@@ -456,7 +552,7 @@ export async function searchMusicVideos(
             return [];
         }
 
-        const detailsMap = await getVideoDetails(videoIds);
+        const detailsMap = await getVideoDetails(videoIds, apiKey);
 
         const decodeEntities = (str: string) =>
             str
@@ -582,7 +678,7 @@ export async function fetchElonMuskVideos(
         }
 
         const channelIds = items.map((item: any) => item.snippet?.channelId).filter(Boolean);
-        const subCountsMap = await getChannelsSubscriberCounts(channelIds);
+        const subCountsMap = await getChannelsSubscriberCounts(channelIds, apiKey);
 
         const filteredItems = items.filter((item: any) => {
             const chId = item.snippet?.channelId;
@@ -597,7 +693,7 @@ export async function fetchElonMuskVideos(
             return [];
         }
 
-        const detailsMap = await getVideoDetails(videoIds);
+        const detailsMap = await getVideoDetails(videoIds, apiKey);
 
         const decodeEntities = (str: string) =>
             str

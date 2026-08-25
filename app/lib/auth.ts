@@ -1,5 +1,6 @@
 import { pbkdf2Sync, randomBytes } from 'crypto';
 import { cookies } from 'next/headers';
+import { cache } from 'react';
 import { supabase } from './supabase';
 
 export function hashPassword(password: string): string {
@@ -21,7 +22,7 @@ export interface UserSession {
     youtubeApiKey?: string | null;
 }
 
-export async function getCurrentUser(): Promise<UserSession | null> {
+export const getCurrentUser = cache(async (): Promise<UserSession | null> => {
     try {
         const cookieStore = await cookies();
         const sessionCookie = cookieStore.get('auth_session');
@@ -51,4 +52,4 @@ export async function getCurrentUser(): Promise<UserSession | null> {
         console.error('Error fetching current user:', error);
         return null;
     }
-}
+});

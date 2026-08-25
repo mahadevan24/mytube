@@ -5,7 +5,8 @@ import { getStoredInterests } from '../../../lib/storage';
 export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
-        const maxResults = parseInt(searchParams.get('maxResults') || '20', 10);
+        const requestedMaxResults = parseInt(searchParams.get('maxResults') || '5', 10);
+        const maxResults = Math.min(6, Math.max(1, requestedMaxResults));
         const categoryId = searchParams.get('categoryId');
 
         // Parse channel tokens from query params if provided
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
         if (channelTokensParam) {
             try {
                 channelTokens = JSON.parse(channelTokensParam);
-            } catch (e) {
+            } catch {
                 // Invalid JSON, ignore
             }
         }

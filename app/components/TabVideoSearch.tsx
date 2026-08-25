@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, X, Loader2 } from 'lucide-react';
 
@@ -23,12 +23,6 @@ export default function TabVideoSearch({
     
     const [query, setQuery] = useState(initialQuery);
     const [isPending, startTransition] = useTransition();
-
-    // Keep internal query state in sync with URL searchParams
-    useEffect(() => {
-        const urlQuery = searchParams.get('q') || '';
-        setQuery(urlQuery);
-    }, [searchParams]);
 
     const updateUrlQuery = (newQuery: string) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -124,4 +118,3 @@ export default function TabVideoSearch({
         </div>
     );
 }
-
